@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Lock, Mail, Loader2 } from 'lucide-react';
-import { login } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,10 +30,20 @@ export default function LoginPage() {
     }
 
     try {
-      await login({ email, password });
-      router.push('/dashboard');
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('Invalid email or password');
+      } else {
+        router.push('/dashboard');
+        router.refresh();
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +75,7 @@ export default function LoginPage() {
               <input
                 id="email"
                 type="email"
-                placeholder="admin@example.com"
+                placeholder="admin@jarvis.local"
                 className="w-full pl-9 pr-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

@@ -1,17 +1,14 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import { Moon, Sun, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { logout } from '@/lib/auth';
 
 export function Header() {
-  const router = useRouter();
   const { theme, setTheme } = useTheme();
 
   const handleLogout = async () => {
-    await logout();
-    router.push('/login');
+    await signOut({ callbackUrl: '/login' });
   };
 
   return (
