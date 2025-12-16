@@ -22,25 +22,27 @@ export function FeatureCard({
   className = '',
 }: FeatureCardProps) {
   return (
-    <Card variant="glass" hover className={`group relative ${className}`}>
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-accent-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+    <Card variant="default" hover className={`group relative ${className}`}>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-accent-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
 
       <div className="relative">
         <div className="flex items-start justify-between mb-4">
-          <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 group-hover:scale-110 transition-transform duration-300">
-            <Icon name={icon} size="md" />
-          </div>
+          <Icon
+            name={icon}
+            size="lg"
+            className="text-neutral-400 group-hover:text-primary-500 transition-colors"
+          />
           {badge && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-600">
               {badge}
             </span>
           )}
         </div>
 
-        <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
+        <h3 className="text-lg font-semibold text-neutral-900 mb-2 group-hover:text-primary-700 transition-colors">
           {title}
         </h3>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed mb-4">
+        <p className="text-sm text-neutral-600 leading-relaxed mb-4">
           {description}
         </p>
 

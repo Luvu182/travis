@@ -1,6 +1,5 @@
 'use client';
 
-import { type ReactNode } from 'react';
 import { Card } from './card';
 import { Icon, type IconName } from './icon';
 
@@ -25,24 +24,24 @@ export function StatCard({
   className = '',
 }: StatCardProps) {
   return (
-    <Card variant="glass" className={className}>
+    <Card variant="default" className={`group ${className}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+          <p className="text-sm font-medium text-neutral-500 mb-1">
             {label}
           </p>
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+            <span className="text-3xl font-bold text-neutral-900">
               {typeof value === 'number' ? value.toLocaleString() : value}
             </span>
             {suffix && (
-              <span className="text-sm text-neutral-500 dark:text-neutral-400">{suffix}</span>
+              <span className="text-sm text-neutral-500">{suffix}</span>
             )}
           </div>
           {change && (
             <div
               className={`flex items-center gap-1 mt-2 text-sm ${
-                change.type === 'increase' ? 'text-green-600' : 'text-red-600'
+                change.type === 'increase' ? 'text-emerald-600' : 'text-red-600'
               }`}
             >
               <Icon
@@ -50,14 +49,16 @@ export function StatCard({
                 size="xs"
               />
               <span>{Math.abs(change.value)}%</span>
-              <span className="text-neutral-400">vs last week</span>
+              <span className="text-neutral-400">so với tuần trước</span>
             </div>
           )}
         </div>
         {icon && (
-          <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400">
-            <Icon name={icon} size="sm" />
-          </div>
+          <Icon
+            name={icon}
+            size="md"
+            className="text-neutral-400 group-hover:text-primary-500 transition-colors"
+          />
         )}
       </div>
     </Card>

@@ -13,112 +13,97 @@ const steps: Array<{
   {
     step: 1,
     icon: 'message',
-    title: 'Connect Your Platforms',
-    description:
-      'Add J.A.R.V.I.S bot to your Telegram group or Lark workspace. Setup takes less than 2 minutes.',
+    title: 'Kết Nối Nền Tảng',
+    description: 'Thêm bot vào nhóm Telegram hoặc workspace Lark. Cài đặt chỉ mất 2 phút.',
   },
   {
     step: 2,
     icon: 'sparkles',
-    title: 'Chat Naturally',
-    description:
-      'Talk to your team as usual. J.A.R.V.I.S listens, understands context, and extracts important information.',
+    title: 'Chat Tự Nhiên',
+    description: 'Trò chuyện với team như bình thường. AI lắng nghe và hiểu ngữ cảnh.',
   },
   {
     step: 3,
     icon: 'memory',
-    title: 'AI Remembers Everything',
-    description:
-      'Tasks, decisions, and context are automatically saved to long-term memory for future reference.',
+    title: 'AI Ghi Nhớ',
+    description: 'Công việc và quyết định được tự động lưu vào bộ nhớ dài hạn.',
   },
   {
     step: 4,
     icon: 'search',
-    title: 'Search & Retrieve',
-    description:
-      'Ask questions in natural language to find past conversations, decisions, and action items instantly.',
+    title: 'Tìm & Truy Xuất',
+    description: 'Hỏi bằng ngôn ngữ tự nhiên để tìm mọi thông tin trong quá khứ.',
   },
 ];
 
 export function HowItWorksSection() {
   const { ref, isVisible } = useScrollAnimation();
-  const { getDelay } = useStaggerAnimation(steps.length, 150);
+  const { getDelay } = useStaggerAnimation(steps.length, 120);
 
   return (
-    <section id="how-it-works" className="py-28 bg-neutral-50 relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-0 w-72 h-72 bg-gradient-to-r from-primary-200/40 to-transparent rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-72 h-72 bg-gradient-to-l from-accent-200/40 to-transparent rounded-full blur-3xl" />
-      </div>
-
+    <section
+      id="how-it-works"
+      className="py-28 bg-white relative overflow-hidden"
+    >
       <Container className="relative z-10">
         <div
           ref={ref}
-          className={`text-center max-w-3xl mx-auto mb-20 transition-all duration-700 ${
+          className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-700 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
         >
           <Badge variant="default" className="mb-6 text-sm font-semibold">
-            HOW IT WORKS
+            CÁCH HOẠT ĐỘNG
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-6">
-            Get Started in{' '}
-            <span className="text-gradient">Minutes</span>
+            Bắt Đầu Trong <span className="text-gradient">Vài Phút</span>
           </h2>
-          <p className="text-xl text-neutral-600">
-            Four simple steps to transform your team communication
+          <p className="text-xl text-neutral-700">
+            4 bước đơn giản để nâng cấp giao tiếp team
           </p>
         </div>
 
-        {/* Steps */}
-        <div className="relative max-w-5xl mx-auto">
-          {/* Connection line */}
-          <div className="hidden lg:block absolute top-24 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-primary-300 via-accent-300 to-primary-300" />
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((step, index) => (
-              <div
-                key={step.step}
-                style={{ transitionDelay: isVisible ? getDelay(index) : '0ms' }}
-                className={`group relative transition-all duration-500 ${
-                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                }`}
-              >
-                {/* Step card */}
-                <div className="relative bg-white rounded-2xl p-8 shadow-lg shadow-neutral-200/50 border border-neutral-100 hover:shadow-xl hover:border-primary-200 transition-all duration-300 hover:-translate-y-1">
-                  {/* Step number */}
-                  <div className="absolute -top-4 left-8 w-8 h-8 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 flex items-center justify-center text-white text-sm font-bold shadow-lg">
+        {/* Steps Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
+          {steps.map((step, index) => (
+            <div
+              key={step.step}
+              style={{ transitionDelay: isVisible ? getDelay(index) : '0ms' }}
+              className={`group relative transition-all duration-500 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
+            >
+              {/* Card */}
+              <div className="relative bg-neutral-50 rounded-2xl p-6 h-full border border-neutral-100 hover:bg-white hover:shadow-lg hover:shadow-neutral-200/50 hover:border-neutral-200 transition-all duration-300">
+                {/* Step number + icon */}
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-5xl font-bold text-neutral-200 group-hover:text-primary-200 transition-colors">
                     {step.step}
-                  </div>
-
-                  {/* Icon */}
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-neutral-50 to-neutral-100 flex items-center justify-center mb-6 group-hover:from-primary-50 group-hover:to-primary-100 transition-colors duration-300">
-                    <Icon
-                      name={step.icon}
-                      size="lg"
-                      className="text-neutral-600 group-hover:text-primary-600 transition-colors"
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <h3 className="text-xl font-bold text-neutral-900 mb-3">
-                    {step.title}
-                  </h3>
-                  <p className="text-neutral-600 leading-relaxed">
-                    {step.description}
-                  </p>
+                  </span>
+                  <Icon
+                    name={step.icon}
+                    size="md"
+                    className="text-neutral-400 group-hover:text-primary-500 transition-colors"
+                  />
                 </div>
 
-                {/* Arrow for desktop */}
+                {/* Content */}
+                <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-primary-700 transition-colors">
+                  {step.title}
+                </h3>
+                <p className="text-neutral-700 text-sm leading-relaxed">
+                  {step.description}
+                </p>
+
+                {/* Connector for desktop */}
                 {index < steps.length - 1 && (
-                  <div className="hidden lg:flex absolute -right-4 top-24 z-10">
-                    <Icon name="chevron-right" size="sm" className="text-primary-400" />
+                  <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 z-10">
+                    <Icon name="chevron-right" size="sm" className="text-neutral-300" />
                   </div>
                 )}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </Container>
     </section>

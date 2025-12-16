@@ -26,13 +26,11 @@ const variantStyles: Record<ChatBubbleVariant, { container: string; bubble: stri
   },
   assistant: {
     container: 'flex-row',
-    bubble:
-      'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-2xl rounded-bl-md',
+    bubble: 'bg-neutral-100 text-neutral-900 rounded-2xl rounded-bl-md',
   },
   system: {
     container: 'justify-center',
-    bubble:
-      'bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400 rounded-full text-sm px-4 py-1',
+    bubble: 'bg-neutral-200 text-neutral-600 rounded-full text-sm px-4 py-1',
   },
 };
 
@@ -89,7 +87,7 @@ export function ChatBubble({
         </div>
         <div className="flex items-center gap-2 mt-1 px-1">
           {timestamp && (
-            <span className="text-xs text-neutral-400 dark:text-neutral-500">{timestamp}</span>
+            <span className="text-xs text-neutral-400">{timestamp}</span>
           )}
           {actions}
         </div>

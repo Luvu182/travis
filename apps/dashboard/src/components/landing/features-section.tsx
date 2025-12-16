@@ -8,53 +8,49 @@ const features: Array<{
   icon: IconName;
   title: string;
   description: string;
-  badge?: string;
-  color: string;
+  highlights?: string[];
 }> = [
   {
     icon: 'memory',
-    title: 'Long-term Memory',
+    title: 'Bộ Nhớ Dài Hạn',
     description:
-      'Remembers conversations, decisions, and context across sessions. Never lose important information again.',
-    badge: 'mem0',
-    color: 'from-violet-500 to-purple-600',
+      'Công nghệ lưu trữ thông minh với vector embeddings giúp AI ghi nhớ mọi ngữ cảnh, quyết định và hội thoại quan trọng qua nhiều phiên làm việc.',
+    highlights: [
+      'Tự động phân loại và lưu trữ thông tin theo nhóm, người dùng',
+      'Truy xuất ngữ cảnh liên quan khi cần thiết',
+      'Không giới hạn dung lượng lưu trữ',
+      'Đồng bộ real-time giữa các nền tảng',
+    ],
   },
   {
     icon: 'sparkles',
-    title: 'Auto Task Extraction',
+    title: 'Tự Động Trích Xuất Task',
     description:
-      'Automatically identifies tasks, deadlines, and assignees from natural conversations.',
-    color: 'from-amber-500 to-orange-600',
+      'Tự động nhận diện công việc, deadline và người được giao từ hội thoại tự nhiên.',
   },
   {
     icon: 'search',
-    title: 'Semantic Search',
+    title: 'Tìm Kiếm Ngữ Nghĩa',
     description:
-      'Find any past conversation using natural language. Powered by vector embeddings.',
-    badge: 'pgvector',
-    color: 'from-cyan-500 to-blue-600',
+      'Tìm bất kỳ hội thoại nào trong quá khứ bằng ngôn ngữ tự nhiên.',
   },
   {
     icon: 'globe',
-    title: 'Vietnamese-First',
+    title: 'Ưu Tiên Tiếng Việt',
     description:
-      'Optimized for Vietnamese with cultural nuances and date normalization (ngày mai, hôm qua...).',
-    color: 'from-emerald-500 to-teal-600',
+      'Tối ưu cho tiếng Việt với hiểu biết văn hóa và chuẩn hóa ngày tháng (ngày mai, hôm qua...).',
   },
   {
     icon: 'lightning',
-    title: 'Instant Response',
+    title: 'Phản Hồi Tức Thì',
     description:
-      'Sub-3 second response with Gemini Flash. GPT-4 fallback ensures 99.9% uptime.',
-    badge: 'Fast',
-    color: 'from-rose-500 to-pink-600',
+      'Phản hồi dưới 3 giây với Gemini Flash. Đảm bảo 99.9% uptime.',
   },
   {
     icon: 'shield',
-    title: 'Enterprise Security',
+    title: 'Bảo Mật Chuẩn Doanh Nghiệp',
     description:
-      'End-to-end encryption, no data sharing. Self-hosted option available.',
-    color: 'from-slate-600 to-zinc-700',
+      'Mã hóa đầu cuối, không chia sẻ dữ liệu với bên thứ ba.',
   },
 ];
 
@@ -63,12 +59,7 @@ export function FeaturesSection() {
   const { getDelay } = useStaggerAnimation(features.length, 80);
 
   return (
-    <section id="features" className="py-28 bg-white relative overflow-hidden">
-      {/* Background geometric shapes */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-primary-100 to-primary-50 rounded-full blur-3xl opacity-60" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-accent-100 to-accent-50 rounded-full blur-3xl opacity-60" />
-      </div>
+    <section id="features" className="py-28 bg-neutral-50 bg-dots-light relative overflow-hidden">
 
       <Container className="relative z-10">
         <div
@@ -78,61 +69,66 @@ export function FeaturesSection() {
           }`}
         >
           <Badge variant="primary" className="mb-6 text-sm font-semibold tracking-wide">
-            AI CAPABILITIES
+            TÍNH NĂNG AI
           </Badge>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-tight">
-            Intelligent Features for
-            <span className="block text-gradient mt-2">Modern Teams</span>
+            Tính Năng Thông Minh
+            <span className="block text-gradient mt-2">Cho Team Hiện Đại</span>
           </h2>
-          <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
-            Built with cutting-edge AI technology to help your team work smarter.
+          <p className="text-xl text-neutral-700 max-w-2xl mx-auto">
+            Được xây dựng với công nghệ AI tiên tiến giúp team làm việc hiệu quả hơn.
           </p>
         </div>
 
         {/* Bento Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.map((feature, index) => (
-            <div
-              key={feature.title}
-              style={{ transitionDelay: sectionVisible ? getDelay(index) : '0ms' }}
-              className={`group relative bg-neutral-50 rounded-2xl p-8 border border-neutral-200/80
-                transition-all duration-500 hover:bg-white hover:shadow-xl hover:shadow-neutral-200/50 hover:-translate-y-1 hover:border-neutral-300
-                ${sectionVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-                ${index === 0 ? 'lg:col-span-2 lg:row-span-1' : ''}
-              `}
-            >
-              {/* Icon with gradient background */}
+          {features.map((feature, index) => {
+            const isLargeCard = index === 0;
+            return (
               <div
-                className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color}
-                  flex items-center justify-center mb-6 shadow-lg group-hover:scale-110
-                  transition-transform duration-300`}
+                key={feature.title}
+                style={{ transitionDelay: sectionVisible ? getDelay(index) : '0ms' }}
+                className={`group relative bg-neutral-50 rounded-2xl p-8 border border-neutral-200/80
+                  transition-all duration-500 hover:bg-white hover:shadow-xl hover:shadow-neutral-200/50 hover:-translate-y-1 hover:border-neutral-300
+                  ${sectionVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                  ${isLargeCard ? 'lg:col-span-2 lg:row-span-2' : ''}
+                `}
               >
-                <Icon name={feature.icon} size="md" className="text-white" />
-              </div>
+                {/* Header: Icon + Title inline */}
+                <div className="flex items-center gap-3 mb-4">
+                  <Icon
+                    name={feature.icon}
+                    size="lg"
+                    className="text-neutral-400 group-hover:text-primary-500 transition-colors flex-shrink-0"
+                  />
+                  <h3 className="text-xl font-bold text-neutral-900 group-hover:text-primary-700 transition-colors">
+                    {feature.title}
+                  </h3>
+                </div>
 
-              {/* Content */}
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <h3 className="text-xl font-bold text-neutral-900 group-hover:text-primary-700 transition-colors">
-                  {feature.title}
-                </h3>
-                {feature.badge && (
-                  <span className="shrink-0 px-2.5 py-1 text-xs font-semibold bg-neutral-900 text-white rounded-full">
-                    {feature.badge}
-                  </span>
+                {/* Description */}
+                <p className={`text-neutral-700 leading-relaxed ${isLargeCard ? 'text-lg mb-6' : ''}`}>
+                  {feature.description}
+                </p>
+
+                {/* Highlights for large card */}
+                {isLargeCard && feature.highlights && (
+                  <ul className="mt-4 space-y-3">
+                    {feature.highlights.map((highlight, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <Icon
+                          name="check"
+                          size="sm"
+                          className="text-primary-500 mt-0.5 flex-shrink-0"
+                        />
+                        <span className="text-neutral-800">{highlight}</span>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
-
-              <p className="text-neutral-600 leading-relaxed">
-                {feature.description}
-              </p>
-
-              {/* Hover accent line */}
-              <div
-                className={`absolute bottom-0 left-0 h-1 bg-gradient-to-r ${feature.color} rounded-b-2xl
-                  transition-all duration-300 w-0 group-hover:w-full`}
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Container>
     </section>

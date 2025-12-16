@@ -69,7 +69,7 @@ export function Avatar({
         <div
           className={`
             ${styles.container}
-            ${name ? getColorFromName(name) : 'bg-neutral-300 dark:bg-neutral-700'}
+            ${name ? getColorFromName(name) : 'bg-neutral-300'}
             rounded-full flex items-center justify-center text-white font-medium
             ${styles.text}
           `}
@@ -91,7 +91,7 @@ export function Avatar({
             absolute bottom-0 right-0 block rounded-full
             ${styles.status}
             ${statusColors[status]}
-            border-white dark:border-neutral-900
+            border-white
           `}
         />
       )}

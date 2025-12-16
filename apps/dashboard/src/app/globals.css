@@ -110,6 +110,51 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
 }
 
+/* Unified section background patterns */
+@utility bg-dots-light {
+  background-image: radial-gradient(circle at 1px 1px, rgb(0 0 0 / 0.05) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+@utility bg-dots-dark {
+  background-image: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.08) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+@utility bg-grid-light {
+  background-image: linear-gradient(to right, rgb(0 0 0 / 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(0 0 0 / 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+@utility bg-grid-dark {
+  background-image: linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Unified card styles */
+@utility card-base {
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid var(--color-neutral-200);
+  transition: all 0.3s ease;
+}
+
+@utility card-hover {
+  &:hover {
+    border-color: var(--color-neutral-300);
+    box-shadow: 0 10px 40px -10px rgb(0 0 0 / 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+@utility card-dark {
+  background: rgb(255 255 255 / 0.05);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgb(255 255 255 / 0.1);
+}
+
 @utility glass {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -137,6 +182,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Animations */
+@utility animate-fadeIn {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
 @utility animate-fade-in-up {
   animation: fadeInUp 0.6s ease-out forwards;
 }
@@ -166,6 +215,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -346,6 +404,33 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scroll-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 /* Scroll-triggered animation utilities */
 @utility animate-on-scroll {
   opacity: 0;
@@ -418,6 +503,18 @@ h1, h2, h3, h4, h5, h6 {
 @utility animate-gradient {
   background-size: 200% 200%;
   animation: gradientShift 3s ease infinite;
+}
+
+@utility animate-scroll {
+  animation: scroll 20s linear infinite;
+}
+
+@utility animate-scroll-left {
+  animation: scroll-left 35s linear infinite;
+}
+
+@utility animate-scroll-right {
+  animation: scroll-right 35s linear infinite;
 }
 
 @utility animate-float-rotate {

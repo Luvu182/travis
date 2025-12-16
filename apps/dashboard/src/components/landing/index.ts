@@ -1,10 +1,12 @@
 export { Header } from './header';
 export { HeroSection } from './hero-section';
+export { TrustedBySection } from './trusted-by-section';
 export { FeaturesSection } from './features-section';
 export { HowItWorksSection } from './how-it-works-section';
 export { IntegrationsSection } from './integrations-section';
 export { TestimonialsSection } from './testimonials-section';
 export { StatsSection } from './stats-section';
 export { FAQSection } from './faq-section';
+export { PricingSection } from './pricing-section';
 export { CTASection } from './cta-section';
 export { Footer } from './footer';

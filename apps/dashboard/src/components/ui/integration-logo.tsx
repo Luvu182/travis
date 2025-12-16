@@ -6,7 +6,7 @@ type IntegrationType = 'telegram' | 'lark' | 'gemini' | 'openai' | 'postgresql' 
 
 interface IntegrationLogoProps {
   type: IntegrationType;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   showLabel?: boolean;
   className?: string;
 }
@@ -15,6 +15,7 @@ const sizeStyles = {
   sm: 'w-8 h-8',
   md: 'w-12 h-12',
   lg: 'w-16 h-16',
+  xl: 'w-20 h-20',
 };
 
 const integrationData: Record<
@@ -112,7 +113,7 @@ export function IntegrationLogo({
         {data.icon}
       </div>
       {showLabel && (
-        <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
+        <span className="text-xs font-medium text-neutral-600">
           {data.label}
         </span>
       )}

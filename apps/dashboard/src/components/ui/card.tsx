@@ -13,13 +13,11 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles: Record<CardVariant, string> = {
-  default: 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800',
-  glass:
-    'bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border border-neutral-200/50 dark:border-neutral-700/50',
-  elevated: 'bg-white dark:bg-neutral-900 shadow-xl shadow-neutral-900/5 dark:shadow-neutral-900/50',
-  bordered: 'bg-transparent border-2 border-neutral-200 dark:border-neutral-700',
-  gradient:
-    'bg-gradient-to-br from-primary-500/10 via-transparent to-accent-500/10 border border-primary-200/30 dark:border-primary-700/30',
+  default: 'bg-white border border-neutral-200',
+  glass: 'bg-white/90 backdrop-blur-xl border border-neutral-200/50',
+  elevated: 'bg-white shadow-xl shadow-neutral-900/5',
+  bordered: 'bg-transparent border-2 border-neutral-200',
+  gradient: 'bg-gradient-to-br from-primary-50 via-white to-accent-50 border border-primary-200/30',
 };
 
 const paddingStyles: Record<string, string> = {
@@ -55,13 +53,13 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         {...props}
       >
         {header && (
-          <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
+          <div className="px-6 py-4 border-b border-neutral-200">
             {header}
           </div>
         )}
         <div className={paddingStyles[padding]}>{children}</div>
         {footer && (
-          <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50">
+          <div className="px-6 py-4 border-t border-neutral-200 bg-neutral-50">
             {footer}
           </div>
         )}
@@ -90,9 +88,7 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div
-      className={`px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 ${className}`}
-    >
+    <div className={`px-6 py-4 border-b border-neutral-200 ${className}`}>
       {children}
     </div>
   );
@@ -106,9 +102,7 @@ export function CardFooter({
   className?: string;
 }) {
   return (
-    <div
-      className={`px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50 ${className}`}
-    >
+    <div className={`px-6 py-4 border-t border-neutral-200 bg-neutral-50 ${className}`}>
       {children}
     </div>
   );
