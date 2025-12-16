@@ -430,6 +430,99 @@ Next.js 15 monitoring dashboard for memory management and analytics.
 - [ ] Load testing and optimization
 - [ ] External monitoring (Grafana/Prometheus)
 
+---
+
+## Future Enhancements (Post-MVP)
+
+### Phase 11: Graph Memory (Neo4j) - PLANNED
+**Priority:** Medium | **Prerequisite:** Production usage data
+
+**What it provides:**
+- Entity-relationship tracking (who works with whom)
+- Multi-hop queries ("Ai làm việc với Minh trong dự án ABC?")
+- Temporal reasoning (+2% accuracy improvement)
+
+**When to implement:**
+- Team size > 20 people
+- Need complex relationship queries
+- After monitoring shows extraction quality is good
+
+**Technical requirements:**
+- Neo4j Community Edition (self-host, FREE)
+- ~512MB-1GB additional RAM
+- ~2x LLM token cost (extraction overhead)
+
+**Known issues to address:**
+- [#3245](https://github.com/mem0ai/mem0/issues/3245): Memory deletion không cleanup Neo4j → cần cleanup job
+- PR #3557 pending fix
+
+**Implementation plan:**
+```yaml
+# docker-compose.yml addition
+services:
+  neo4j:
+    image: neo4j:5-community
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/password
+    volumes:
+      - neo4j_data:/data
+```
+
+```typescript
+// mem0-client.ts config addition
+config.enableGraph = true;
+config.graphStore = {
+  provider: 'neo4j',
+  config: {
+    url: env.NEO4J_URL,        // bolt://localhost:7687
+    username: env.NEO4J_USERNAME,
+    password: env.NEO4J_PASSWORD,
+    database: env.NEO4J_DATABASE,
+  },
+};
+```
+
+**Maintenance required:**
+- Weekly cleanup job for orphaned nodes
+- Monitor Neo4j memory usage
+- Backup graph data separately
+
+---
+
+### Phase 12: Custom Vietnamese Prompt - OPTIONAL
+**Priority:** Low | **Prerequisite:** Poor extraction quality in production
+
+**When to implement:**
+- Default mem0 extraction quality < 80% accuracy
+- Too much noise stored (irrelevant facts)
+- Domain-specific filtering needed
+
+**Best practices:**
+- Include few-shot examples with BOTH positive and negative cases
+- Test with real Vietnamese transcripts before deploy
+- Return strict JSON format `{"facts": [...]}`
+
+**Example prompt structure:**
+```python
+custom_prompt = """
+Extract important information. Examples:
+
+Input: "Chào bạn"
+Output: {"facts": []}
+
+Input: "Mai họp team lúc 2h chiều"
+Output: {"facts": ["Lịch họp team: 2h chiều ngày mai"]}
+
+Input: "Ok em nhé"
+Output: {"facts": []}
+"""
+```
+
+---
+
 ## Risk Assessment
 
 | Risk | Severity | Mitigation |

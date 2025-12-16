@@ -74,47 +74,53 @@ J.A.R.V.I.S is a modular, horizontally-scalable system designed for multi-platfo
 **Components:**
 
 #### 2.1 Memory Layer (Phase 03 - REFACTORED)
-**Architecture:** mem0 OSS Self-Hosted Integration
+**Architecture:** mem0 Python SDK + FastAPI Service
 
-a) **mem0 Client (mem0-client.ts)**
-- Package: `mem0ai` (self-hosted, NOT cloud)
+a) **Python Memory Service (`apps/memory-service/main.py`)**
+- Framework: FastAPI + Uvicorn
+- Package: `mem0ai` Python SDK (NOT TypeScript)
 - LLM: Gemini 2.5-flash-lite (extraction)
-- Embeddings: embedding-001 (1536D, NOT 768D)
+- Embeddings: gemini-embedding-001 (1536D)
 - Vector Store: PostgreSQL + pgvector
-- History Store: SQLite (local file)
-- Operations:
-  - `addMemory(userId, groupId, message, ...)` - Add with auto extraction/dedup
-  - `searchMemories(userId, groupId, query, limit)` - Semantic search
-  - `getAllMemories(userId, groupId, limit)` - Retrieve all
-  - `updateMemory(memoryId, newText)` - Update memory
-  - `deleteMemory(memoryId)` - Delete memory
-- Type Safety: MemoryItem interface with runtime type guards (no any/unknown)
+- REST Endpoints:
+  - `POST /memories/add` - Add with auto extraction/dedup
+  - `POST /memories/search` - Semantic search
+  - `POST /memories/all` - Retrieve all memories
+  - `POST /memories/update` - Update memory
+  - `POST /memories/delete` - Delete memory
+  - `POST /memories/delete-all` - Delete all for user/group
+  - `GET /memories/history/{id}` - Memory audit trail
+  - `GET /health` - Health check
+- Features:
+  - Vietnamese date normalization (ngày mai, hôm nay, hôm qua)
+  - Metadata: sender_name, group_name, sent_at
+  - Automatic deduplication via mem0
 
-b) **Information Extraction (extractor.ts)**
-- Simplified delegation to mem0.add()
-- Method:
-  - `extractAndStore(userId, groupId, message, ...)` - Wrapper for mem0.add()
-- mem0 handles:
-  - Automatic extraction using Gemini 2.5-flash-lite
-  - Deduplication against existing memories
-  - Embedding generation (1536D)
-  - Storage in pgvector
+b) **TypeScript HTTP Client (`packages/core/src/memory/mem0-client.ts`)**
+- HTTP client calling Python memory service
+- Configured via `MEMORY_SERVICE_URL` env var
+- Functions:
+  - `addMemory(params)` - POST to /memories/add
+  - `searchMemories(params)` - POST to /memories/search
+  - `getAllMemories(params)` - POST to /memories/all
+  - `updateMemory(id, data)` - POST to /memories/update
+  - `deleteMemory(id)` - POST to /memories/delete
+  - `deleteAllMemories(params)` - POST to /memories/delete-all
+  - `getMemoryHistory(id)` - GET /memories/history/{id}
+  - `isMemoryEnabled()` - Health check
+- Type Safety: MemoryItem interface with proper types
 
 c) **Storage Layer (storage.ts)**
 - **Message audit trail ONLY** (not memory)
 - Method:
   - `storeMessage(platformMessageId, groupId, userId, content, ...)` - Raw message log
-- Memory storage handled by mem0 internally
+- Memory storage handled by Python service
 
 d) **Retrieval Layer (retriever.ts)**
-- Wrappers for mem0 search operations
+- Wrappers for mem0 HTTP client
 - Methods:
-  - `searchRelevantMemories(userId, groupId, query, limit)` - Wrapper for mem0.search()
+  - `searchRelevantMemories(userId, groupId, query, limit)` - Calls searchMemories()
   - `formatMemoriesForPrompt(memories)` - Format for LLM prompts
-- mem0 handles:
-  - Semantic search with pgvector
-  - Similarity scoring
-  - User/group filtering
 
 #### 2.2 LLM Layer (Phase 04 - NEW)
 **Unified LLM Service with Task-Based Routing**
@@ -149,17 +155,18 @@ c) **Vietnamese System Prompts (`prompts.ts`)**
   - Same processing capabilities
   - Seamless switchover
 
-#### 2.3 Information Extraction Pipeline (mem0-powered)
+#### 2.3 Information Extraction Pipeline (Python mem0 Service)
 Extracts structured data from unstructured messages:
 
 **Process:**
-1. Receive raw message with context (userId, groupId, senderName, etc.)
-2. Call mem0.add() which:
+1. TypeScript API receives message with context (userId, groupId, senderName, etc.)
+2. HTTP POST to Python memory service `/memories/add`
+3. Python service calls `memory.add()` which:
+   - Normalizes Vietnamese dates (ngày mai → absolute date)
    - Extracts info using Gemini 2.5-flash-lite
-   - Generates 1536D embedding with embedding-001
+   - Generates 1536D embedding with gemini-embedding-001
    - Deduplicates against existing memories
    - Stores in PostgreSQL pgvector table
-3. mem0 handles all extraction, embedding, deduplication internally
 
 **Output:** Memory stored in mem0's internal tables (not extractedInfo)
 
@@ -505,14 +512,15 @@ pnpm dev
 ## Phase Completion Status
 
 ### Phase 03 (Memory Layer) - COMPLETED (REFACTORED)
-- mem0 OSS self-hosted integration (`mem0ai` package)
+- Python FastAPI memory service (`apps/memory-service/`)
+- `mem0ai` Python SDK (NOT TypeScript)
 - Gemini 2.5-flash-lite LLM for extraction
-- Gemini embedding-001 (1536D vectors, NOT 768D)
+- Gemini embedding-001 (1536D vectors)
 - PostgreSQL + pgvector vector store (managed by mem0)
-- SQLite history store (local file)
+- TypeScript HTTP client calling Python service
+- Vietnamese date normalization (ngày mai, hôm nay, hôm qua)
 - Automatic deduplication via mem0
-- Type-safe MemoryItem interface (no any/unknown)
-- 70% code reduction (~500 lines → ~150 lines)
+- Type-safe MemoryItem interface
 - Status: Complete, ready for testing
 
 ### Phase 04 (LLM Integration) - COMPLETED
@@ -587,7 +595,7 @@ connect_timeout: 10
 | **pgvector** | PostgreSQL extension for vector operations (managed by mem0) |
 | **Lazy Init** | Database connection only created on first use |
 | **Mutex** | Mutual exclusion to prevent race conditions |
-| **mem0** | OSS self-hosted memory framework (mem0ai package) |
+| **mem0** | Python memory service using mem0ai SDK (apps/memory-service) |
 | **Gemini 2.5-flash-lite** | Google's fast LLM (NOT 2.5, flash-lite only) |
 | **embedding-001** | Google's 1536D embedding model (NOT text-embedding-004) |
 | **Drizzle ORM** | TypeScript-first ORM with type inference |

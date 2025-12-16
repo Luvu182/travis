@@ -1,65 +1,237 @@
 # J.A.R.V.I.S - Memory Layer API Documentation
 
-**Last Updated:** 2025-12-16
-**Phase:** 03 - mem0 OSS Self-Hosted Integration (REFACTORED)
+**Last Updated:** 2025-12-17
+**Phase:** 03 - mem0 Python SDK + FastAPI Service (REFACTORED)
 **Type:** Memory Processing API Reference
 
 ## Overview
 
-Memory layer uses **mem0 OSS (self-hosted)** via `mem0ai` package for complete data privacy and control. Delegates all memory operations (extraction, embedding, deduplication, storage, retrieval) to mem0's Memory class.
+Memory layer uses **mem0 Python SDK** via a FastAPI service (`apps/memory-service/`). TypeScript code calls the Python service via HTTP.
 
-**Architecture:** mem0ai → Gemini 2.5-flash-lite (LLM) + embedding-001 (1536D) → PostgreSQL + pgvector (vector store) + SQLite (history)
+**Architecture:**
+```
+TypeScript API → HTTP Client → Python FastAPI → mem0ai SDK → PostgreSQL + pgvector
+```
 
-## mem0 Client (`mem0-client.ts`)
+## Python Memory Service (`apps/memory-service/main.py`)
 
 ### Configuration
 
-```typescript
-import { Memory } from 'mem0ai/oss';
+```python
+from mem0 import Memory
 
-export const memory = new Memory({
-  version: 'v1.1',
-  llm: {
-    provider: 'google_ai',
-    config: {
-      apiKey: env.GEMINI_API_KEY,
-      model: 'gemini-2.5-flash-lite', // NOT gemini-2.5
+config = {
+    "llm": {
+        "provider": "gemini",
+        "config": {
+            "model": "gemini-2.5-flash-lite",
+            "temperature": 0.1,
+            "max_tokens": 2000,
+        },
     },
-  },
-  embedder: {
-    provider: 'google_ai',
-    config: {
-      apiKey: env.GEMINI_API_KEY,
-      model: 'embedding-001', // 1536D embeddings
+    "embedder": {
+        "provider": "gemini",
+        "config": {
+            "model": "gemini-embedding-001",  # 1536D
+        },
     },
-  },
-  vectorStore: {
-    provider: 'pgvector',
-    config: {
-      host: env.DB_HOST,
-      port: parseInt(env.DB_PORT || '5432'),
-      user: env.DB_USER,
-      password: env.DB_PASSWORD,
-      database: env.DB_NAME,
-      collectionName: 'memories',
-      dimension: 1536, // NOT 768
+    "vector_store": {
+        "provider": "pgvector",
+        "config": {
+            "host": os.getenv("DB_HOST", "localhost"),
+            "port": int(os.getenv("DB_PORT", "5432")),
+            "user": os.getenv("DB_USER", "postgres"),
+            "password": os.getenv("DB_PASSWORD"),
+            "dbname": os.getenv("DB_NAME", "jarvis"),
+            "collection_name": "memories",
+            "embedding_model_dims": 1536,
+        },
     },
-  },
-  historyStore: {
-    provider: 'sqlite',
-    config: {
-      historyDbPath: './memory_history.db',
-    },
-  },
-});
+}
+
+memory = Memory.from_config(config)
 ```
 
 **Key Points:**
 - LLM: Gemini 2.5-flash-lite (fast, cost-effective)
-- Embeddings: embedding-001 with **1536D** vectors (NOT 768D)
+- Embeddings: gemini-embedding-001 with **1536D** vectors
 - Vector Store: PostgreSQL + pgvector (self-hosted)
-- History Store: SQLite (local file)
-- Version: v1.1 (mem0 API version)
+- Vietnamese date normalization built-in
+
+---
+
+### REST API Endpoints
+
+#### `GET /health`
+Health check endpoint.
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "service": "memory-service",
+  "mem0": true
+}
+```
+
+---
+
+#### `POST /memories/add`
+Add memory with automatic extraction, embedding, and deduplication.
+
+**Request:**
+```json
+{
+  "user_id": "user-123",
+  "group_id": "group-456",
+  "message": "Cần deploy hệ thống vào thứ 6 tuần này",
+  "sender_name": "Alice",
+  "group_name": "Dev Team",
+  "sent_at": "2025-12-17T10:00:00Z"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": []
+}
+```
+
+**Features:**
+- Vietnamese date normalization (ngày mai → absolute date)
+- Automatic extraction using Gemini 2.5-flash-lite
+- Automatic deduplication against existing memories
+- Metadata stored: sender_name, group_name, sent_at, original_message
+
+---
+
+#### `POST /memories/search`
+Semantic search across stored memories.
+
+**Request:**
+```json
+{
+  "user_id": "user-123",
+  "group_id": "group-456",
+  "query": "deployment deadline",
+  "limit": 5
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "mem-uuid",
+      "memory": "Deploy hệ thống vào thứ 6 tuần này",
+      "score": 0.89,
+      "metadata": {
+        "sender_name": "Alice",
+        "sent_at": "2025-12-17T10:00:00Z"
+      }
+    }
+  ]
+}
+```
+
+---
+
+#### `POST /memories/all`
+Retrieve all memories for user/group.
+
+**Request:**
+```json
+{
+  "user_id": "user-123",
+  "group_id": "group-456",
+  "limit": 10
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [...]
+}
+```
+
+---
+
+#### `POST /memories/update`
+Update existing memory content.
+
+**Request:**
+```json
+{
+  "memory_id": "mem-uuid",
+  "data": "Updated: Deploy postponed to Monday"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true
+}
+```
+
+---
+
+#### `POST /memories/delete`
+Delete memory by ID.
+
+**Request:**
+```json
+{
+  "memory_id": "mem-uuid"
+}
+```
+
+---
+
+#### `POST /memories/delete-all`
+Delete all memories for user/group.
+
+**Request:**
+```json
+{
+  "user_id": "user-123",
+  "group_id": "group-456"
+}
+```
+
+---
+
+#### `GET /memories/history/{memory_id}`
+Get memory history (audit trail).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [...]
+}
+```
+
+---
+
+## TypeScript HTTP Client (`packages/core/src/memory/mem0-client.ts`)
+
+HTTP client calling Python memory service.
+
+### Configuration
+
+```typescript
+import { env } from '@jarvis/config';
+
+const MEMORY_SERVICE_URL = env.MEMORY_SERVICE_URL;
+// e.g., http://localhost:8000
+```
 
 ---
 
@@ -76,16 +248,11 @@ export interface MemoryItem {
 }
 ```
 
-**Type Safety:**
-- Proper interface (NO any/unknown)
-- Runtime type guards: `Array.isArray(results) ? results : []`
-- All functions return `Promise<MemoryItem[]>` or `Promise<void>`
-
 ---
 
 ### `addMemory(params)`
 
-Add memory with automatic extraction, embedding, and deduplication.
+Add memory via Python service.
 
 **Signature:**
 ```typescript
@@ -95,17 +262,10 @@ function addMemory(params: {
   message: string;
   senderName?: string;
   groupName?: string;
+  sentAt?: Date;
+  metadata?: Record<string, unknown>;
 }): Promise<void>
 ```
-
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `userId` | string | Yes | User identifier for mem0 context |
-| `groupId` | string | Yes | Group identifier for mem0 context |
-| `message` | string | Yes | Message content to extract from |
-| `senderName` | string | No | Message sender name |
-| `groupName` | string | No | Group/chat name |
 
 **Usage:**
 ```typescript
@@ -117,23 +277,15 @@ await addMemory({
   message: 'Cần deploy hệ thống vào thứ 6 tuần này',
   senderName: 'Alice',
   groupName: 'Dev Team',
+  sentAt: new Date(),
 });
 ```
-
-**What mem0 Does:**
-1. Extracts information using Gemini 2.5-flash-lite
-2. Generates 1536D embedding with embedding-001
-3. Deduplicates against existing memories
-4. Stores in PostgreSQL vector table
-5. Logs to SQLite history
-
-**Returns:** void (fire-and-forget)
 
 ---
 
 ### `searchMemories(params)`
 
-Semantic search across stored memories.
+Semantic search via Python service.
 
 **Signature:**
 ```typescript
@@ -144,18 +296,6 @@ function searchMemories(params: {
   limit?: number;
 }): Promise<MemoryItem[]>
 ```
-
-**Parameters:**
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `userId` | string | - | User context for search |
-| `groupId` | string | - | Group context for search |
-| `query` | string | - | Search query text |
-| `limit` | number | 5 | Max results |
-
-**Returns:**
-- Array of MemoryItem with similarity scores
-- Empty array if no results
 
 **Usage:**
 ```typescript
@@ -170,12 +310,6 @@ results.forEach(r => {
   console.log(`[${r.score}] ${r.memory}`);
 });
 ```
-
-**What mem0 Does:**
-1. Generates 1536D embedding from query
-2. Cosine similarity search in pgvector
-3. Filters by userId/groupId (agentId)
-4. Returns top K results with scores
 
 ---
 
@@ -192,58 +326,19 @@ function getAllMemories(params: {
 }): Promise<MemoryItem[]>
 ```
 
-**Parameters:**
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `userId` | string | - | User context |
-| `groupId` | string | - | Group context |
-| `limit` | number | 10 | Max results |
-
-**Returns:**
-- Array of MemoryItem (all memories, not filtered by query)
-
-**Usage:**
-```typescript
-const all = await getAllMemories({
-  userId: 'user-123',
-  groupId: 'group-456',
-  limit: 20,
-});
-```
-
 ---
 
-### `updateMemory(memoryId, newText)`
+### `updateMemory(memoryId, data)`
 
-Update existing memory content.
+Update existing memory.
 
 **Signature:**
 ```typescript
 function updateMemory(
   memoryId: string,
-  newText: string
+  data: string
 ): Promise<void>
 ```
-
-**Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `memoryId` | string | Memory ID to update |
-| `newText` | string | New memory content |
-
-**Usage:**
-```typescript
-await updateMemory(
-  'mem-id-123',
-  'Updated: Deploy postponed to Monday'
-);
-```
-
-**What mem0 Does:**
-1. Updates memory text
-2. Regenerates embedding
-3. Updates vector in pgvector
-4. Logs to history
 
 ---
 
@@ -256,68 +351,64 @@ Delete memory by ID.
 function deleteMemory(memoryId: string): Promise<void>
 ```
 
-**Usage:**
+---
+
+### `deleteAllMemories(params)`
+
+Delete all memories for user/group.
+
+**Signature:**
 ```typescript
-await deleteMemory('mem-id-123');
+function deleteAllMemories(params: {
+  userId: string;
+  groupId: string;
+}): Promise<void>
 ```
 
 ---
 
-## Extractor Module (`extractor.ts`)
+### `getMemoryHistory(memoryId)`
 
-Simplified delegation to mem0.add().
-
-### `extractAndStore(params)`
-
-Extract and store information from message.
+Get memory audit trail.
 
 **Signature:**
 ```typescript
-function extractAndStore(params: {
-  userId: string;
-  groupId: string;
-  message: string;
-  senderName?: string;
-  groupName?: string;
-}): Promise<void>
+function getMemoryHistory(
+  memoryId: string
+): Promise<MemoryHistoryEntry[]>
 ```
 
-**Implementation:**
+---
+
+### `isMemoryEnabled()`
+
+Check if memory service is available.
+
+**Signature:**
 ```typescript
-export async function extractAndStore(params) {
-  await addMemory({
-    userId,
-    groupId,
-    message,
-    senderName,
-    groupName,
-  });
-}
+function isMemoryEnabled(): Promise<boolean>
 ```
 
-**What It Does:**
-- Simple wrapper around `addMemory()`
-- mem0 handles extraction internally
-- No custom extraction logic needed
+---
 
-**Usage:**
+### `getMemoryHealth()`
+
+Get memory service health status.
+
+**Signature:**
 ```typescript
-import { extractAndStore } from '@jarvis/core';
-
-await extractAndStore({
-  userId: 'user-123',
-  groupId: 'group-456',
-  message: 'Họp team vào lúc 2 giờ chiều thứ 3 để review sprint',
-  senderName: 'Manager',
-  groupName: 'Dev Team',
-});
+function getMemoryHealth(): Promise<{
+  status: string;
+  service: string;
+  mem0: boolean;
+} | null>
 ```
 
 ---
 
 ## Retriever Module (`retriever.ts`)
 
-Wrapper for mem0 search operations.
+Wrapper for mem0 HTTP client with formatting.
 
 ### `searchRelevantMemories(params)`
 
@@ -331,23 +422,6 @@ function searchRelevantMemories(params: {
   query: string;
   limit?: number;
 }): Promise<MemoryItem[]>
-```
-
-**Implementation:**
-```typescript
-export async function searchRelevantMemories(params) {
-  return await searchMemories(params);
-}
-```
-
-**Usage:**
-```typescript
-const memories = await searchRelevantMemories({
-  userId: 'user-123',
-  groupId: 'group-456',
-  query: 'upcoming deadlines',
-  limit: 5,
-});
 ```
 
 ---
@@ -366,16 +440,6 @@ function formatMemoriesForPrompt(
 **Returns:**
 - Numbered list of memories
 - Vietnamese fallback: "Không có thông tin liên quan được lưu trữ."
-
-**Usage:**
-```typescript
-const formatted = formatMemoriesForPrompt(memories);
-console.log(formatted);
-// Output:
-// 1. Deploy hệ thống vào thứ 6 tuần này
-// 2. Họp team lúc 2 giờ chiều thứ 3
-// 3. Code review scheduled for tomorrow
-```
 
 ---
 
@@ -399,32 +463,15 @@ function storeMessage(params: {
 }): Promise<void>
 ```
 
-**Purpose:**
-- Stores raw messages for audit/debugging
-- Does NOT handle memory extraction (mem0 does that)
-
-**Usage:**
-```typescript
-import { storeMessage } from '@jarvis/core';
-
-await storeMessage({
-  platformMessageId: 'telegram-msg-123',
-  groupId: 'group-uuid',
-  userId: 'user-uuid',
-  content: 'Message content here',
-  replyToMessageId: 'msg-456',
-  threadId: 'thread-789',
-});
-```
-
 ---
 
 ## Vietnamese Language Support
 
-**mem0 Configuration:**
+**Python Service Features:**
+- Date normalization: `ngày mai` → `ngày 18/12/2025`
+- Date normalization: `hôm nay` → `ngày 17/12/2025`
+- Date normalization: `hôm qua` → `ngày 16/12/2025`
 - LLM: Gemini 2.5-flash-lite (multilingual, Vietnamese-capable)
-- Extraction: Handles Vietnamese text natively
-- Embeddings: embedding-001 supports Vietnamese
 - Search: Semantic search works with Vietnamese queries
 
 **Examples:**
@@ -433,74 +480,98 @@ await storeMessage({
 await addMemory({
   userId: 'user-123',
   groupId: 'group-456',
-  message: 'Cần deploy hệ thống vào thứ 6 tuần này',
+  message: 'Mai họp team lúc 2 giờ chiều',
+  sentAt: new Date('2025-12-17'),
 });
+// Stored as: "Ngày 18/12/2025 họp team lúc 2 giờ chiều"
 
 // Vietnamese search
 const results = await searchMemories({
   userId: 'user-123',
   groupId: 'group-456',
-  query: 'khi nào deploy',
+  query: 'khi nào họp',
   limit: 5,
 });
 ```
 
 ---
 
-## Deduplication
+## Running the Service
 
-**Automatic Deduplication:**
-- mem0 handles deduplication internally
-- Checks similarity against existing memories
-- Merges or updates if duplicate detected
-- No manual deduplication logic needed
+### Development
 
-**Example:**
-```typescript
-// Adding same memory twice
-await addMemory({
-  userId: 'user-123',
-  groupId: 'group-456',
-  message: 'Deploy production environment on Friday',
-});
+```bash
+# Start Python memory service
+cd apps/memory-service
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 
-await addMemory({
-  userId: 'user-123',
-  groupId: 'group-456',
-  message: 'Deploy production environment on Friday',
-});
+# Run service
+GEMINI_API_KEY=xxx \
+DB_HOST=localhost \
+DB_PORT=5432 \
+DB_USER=postgres \
+DB_PASSWORD=xxx \
+DB_NAME=jarvis \
+python main.py
+# Runs on http://localhost:8000
+```
 
-// mem0 automatically deduplicates → only 1 memory stored
+### Docker
+
+```yaml
+# docker-compose.yml
+memory-service:
+  build: ./apps/memory-service
+  ports:
+    - "8000:8000"
+  environment:
+    - GEMINI_API_KEY=${GEMINI_API_KEY}
+    - DB_HOST=postgres
+    - DB_PORT=5432
+    - DB_USER=postgres
+    - DB_PASSWORD=${DB_PASSWORD}
+    - DB_NAME=jarvis
+```
+
+---
+
+## Environment Variables
+
+### Python Service
+```bash
+GEMINI_API_KEY=xxx
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=xxx
+DB_NAME=jarvis
+```
+
+### TypeScript Client
+```bash
+MEMORY_SERVICE_URL=http://localhost:8000
 ```
 
 ---
 
 ## Error Handling
 
-### Common Patterns
-
-**Empty Results:**
+**HTTP Client:**
 ```typescript
 const results = await searchMemories({
   userId: 'non-existent',
   groupId: 'non-existent',
   query: 'anything',
 });
-
-// Returns: [] (empty array)
+// Returns: [] (empty array on failure)
 ```
 
-**Type Safety:**
-```typescript
-// Runtime type guard
-const results = await searchMemories(params);
-// results is ALWAYS MemoryItem[] (never undefined/null)
-```
-
-**mem0 API Errors:**
-- Throws on API failures
-- Handle with try/catch
-- Log errors to console.error
+**Python Service:**
+- Returns `{ success: false, error: "message" }` on errors
+- Logs errors to console
+- HTTP 503 if mem0 not initialized
 
 ---
 
@@ -508,16 +579,11 @@ const results = await searchMemories(params);
 
 | Operation | Latency | Notes |
 |-----------|---------|-------|
-| addMemory | 200-500ms | LLM extraction + embedding + storage |
-| searchMemories | 150-300ms | Embedding + vector search |
-| getAllMemories | 50-150ms | Direct database query |
-| updateMemory | 200-400ms | Re-embedding + update |
-| deleteMemory | 50-100ms | Database delete |
-
-**Scalability:**
-- pgvector supports HNSW indexing (future optimization)
-- mem0 handles connection pooling
-- SQLite history has no network overhead
+| addMemory | 200-500ms | LLM extraction + embedding + HTTP |
+| searchMemories | 150-300ms | Embedding + vector search + HTTP |
+| getAllMemories | 50-150ms | Direct database query + HTTP |
+| updateMemory | 200-400ms | Re-embedding + update + HTTP |
+| deleteMemory | 50-100ms | Database delete + HTTP |
 
 ---
 
@@ -527,16 +593,23 @@ Complete workflow:
 
 ```typescript
 import {
-  extractAndStore,
+  addMemory,
   searchRelevantMemories,
   formatMemoriesForPrompt,
   storeMessage,
+  isMemoryEnabled,
 } from '@jarvis/core';
 
 async function processMessage(
   message: string,
   context: { groupId: string; userId: string; messageId: string }
 ) {
+  // 0. Check if memory service is available
+  if (!(await isMemoryEnabled())) {
+    console.warn('Memory service unavailable');
+    return { memories: [], context_str: '' };
+  }
+
   // 1. Store message for audit
   await storeMessage({
     platformMessageId: context.messageId,
@@ -545,11 +618,12 @@ async function processMessage(
     content: message,
   });
 
-  // 2. Extract and store with mem0
-  await extractAndStore({
+  // 2. Add to memory via Python service
+  await addMemory({
     userId: context.userId,
     groupId: context.groupId,
     message,
+    sentAt: new Date(),
   });
 
   // 3. Search for context
@@ -569,31 +643,10 @@ async function processMessage(
 
 ---
 
-## Environment Variables
-
-Required in `.env`:
-
-```bash
-# Gemini API
-GEMINI_API_KEY=xxx
-
-# PostgreSQL (for mem0 pgvector)
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=xxx
-DB_NAME=jarvis
-
-# Database URL (for Drizzle ORM)
-DATABASE_URL=postgresql://user:pass@host/db
-```
-
----
-
 ## Database Tables
 
-**mem0 Manages:**
-- `memories` table (created by mem0)
+**mem0 Manages (via pgvector):**
+- `memories` collection in pgvector
 - Vector embeddings (1536D)
 - Deduplication metadata
 
@@ -603,36 +656,6 @@ DATABASE_URL=postgresql://user:pass@host/db
 - `messages` - Message audit trail
 - `queryLogs` - Analytics
 
-**REMOVED (Phase 03 Refactor):**
-- `extractedInfo` table (replaced by mem0)
-- `memories` table (replaced by mem0's own table)
-- All custom vector search operations
-
 ---
 
-## Migration from Custom Implementation
-
-**Before (Custom):**
-- embeddings.ts (manual Gemini API calls)
-- extractor.ts (custom extraction with confidence filtering)
-- storage.ts (manual vector storage)
-- retriever.ts (custom similarity search)
-- ~500 lines of code
-
-**After (mem0):**
-- mem0-client.ts (Memory class config)
-- extractor.ts (delegation to mem0.add)
-- storage.ts (message audit only)
-- retriever.ts (wrapper for mem0.search)
-- ~150 lines of code
-
-**Benefits:**
-- 70% code reduction
-- Automatic deduplication
-- Better extraction quality
-- Maintained data privacy (self-hosted)
-- No vendor lock-in
-
----
-
-*Memory Layer API for Phase 03: mem0 OSS self-hosted with Gemini 2.5-flash-lite LLM + embedding-001 (1536D) + PostgreSQL + pgvector.*
+*Memory Layer API for Phase 03: Python FastAPI service with mem0ai SDK + TypeScript HTTP client.*

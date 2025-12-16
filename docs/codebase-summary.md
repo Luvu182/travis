@@ -1,8 +1,8 @@
 # J.A.R.V.I.S - Codebase Summary
 
-**Last Updated:** 2025-12-16
-**Phase:** 03 - Memory Layer REFACTORED (mem0 OSS) + Phase 04 Complete
-**Status:** mem0 self-hosted integration complete with 70% code reduction, LLM layer complete with Gemini 2.5-flash-lite primary + GPT-4o fallback
+**Last Updated:** 2025-12-17
+**Phase:** 03 - Memory Layer REFACTORED (Python mem0 SDK) + Phase 04 Complete
+**Status:** Python FastAPI memory service + TypeScript HTTP client, LLM layer complete with Gemini 2.5-flash-lite primary + GPT-4o fallback
 
 ## Project Overview
 
@@ -14,12 +14,13 @@ J.A.R.V.I.S is a Vietnamese executive assistant chatbot with long-term memory ca
 J.A.R.V.I.S (Monorepo)
 ├── apps/
 │   ├── api/              # Hono API server (TypeScript)
-│   └── dashboard/        # Next.js admin UI (Phase 01 - Complete)
+│   ├── dashboard/        # Next.js admin UI (Phase 10 - Complete)
+│   └── memory-service/   # Python FastAPI mem0 service (Phase 03)
 ├── packages/
 │   ├── config/           # Environment validation & config mgmt
 │   ├── db/               # Database layer (Drizzle ORM + pgvector)
 │   └── core/             # AI & memory logic
-│       ├── memory/       # Embeddings, extraction, storage, retrieval
+│       ├── memory/       # HTTP client for Python mem0 service
 │       └── llm/          # LLM service with task routing & fallback
 └── docker/               # PostgreSQL + pgvector setup
 ```
@@ -38,7 +39,7 @@ J.A.R.V.I.S (Monorepo)
 | **Embeddings** | Gemini embedding-001 | 1536D vectors |
 | **LLM Primary** | Google Gemini 2.5-flash-lite | Latest |
 | **LLM Fallback** | OpenAI GPT-4o-mini | Latest |
-| **Memory Framework** | mem0ai (self-hosted) + Vercel AI SDK | Latest |
+| **Memory Framework** | Python mem0ai SDK + FastAPI service | Latest |
 | **Telegram SDK** | grammY | Latest |
 | **Lark SDK** | @larksuiteoapi/node-sdk | Latest |
 | **Language** | TypeScript | 5.0+ |
@@ -294,24 +295,36 @@ All types are fully type-safe with Drizzle ORM inference.
 
 ## Vector Search Implementation (Phase 03 Refactored)
 
-**NOTE:** Vector search delegated to mem0 OSS (no custom implementation)
+**NOTE:** Vector search delegated to Python mem0 service (no TypeScript SDK)
 
-### mem0 Vector Search
-- **Embeddings:** Gemini embedding-001 (1536D, NOT 768D)
-- **Storage:** PostgreSQL + pgvector (managed by mem0)
-- **Distance Metric:** Cosine similarity
-- **Deduplication:** Automatic via mem0
+### Architecture
+```
+TypeScript API → HTTP Client → Python FastAPI → mem0ai SDK → PostgreSQL + pgvector
+```
+
+### Python Memory Service (`apps/memory-service/`)
+- **Framework:** FastAPI + Uvicorn
+- **Package:** `mem0ai` Python SDK
+- **LLM:** Gemini 2.5-flash-lite (extraction)
+- **Embeddings:** gemini-embedding-001 (1536D)
+- **Storage:** PostgreSQL + pgvector
+- **Features:** Vietnamese date normalization (ngày mai, hôm nay, hôm qua)
+
+### TypeScript HTTP Client (`packages/core/src/memory/mem0-client.ts`)
+- HTTP client calling Python memory service
+- Configured via `MEMORY_SERVICE_URL` env var
 
 ### Memory Operations (via `@jarvis/core/memory`)
 
 ```typescript
-// Add memory (with auto extraction & deduplication)
+// Add memory (calls Python service)
 await addMemory({
   userId,
   groupId,
   message,
   senderName?,
-  groupName?
+  groupName?,
+  sentAt?
 });
 
 // Search memories
@@ -325,7 +338,7 @@ const results = await searchMemories({
 // Returns: MemoryItem[] with id, memory, score, metadata
 ```
 
-**All vector operations handled by mem0 internally - no manual embedding/search logic needed.**
+**All vector operations handled by Python mem0 service.**
 
 ## Integration Points
 
@@ -508,23 +521,23 @@ Request (task + prompt)
 
 | Metric | Value |
 |--------|-------|
-| **Applications** | 2 (api + dashboard) |
+| **Applications** | 3 (api + dashboard + memory-service) |
 | **Packages** | 3 (config, db, core) |
 | **Database Tables** | 4 (extractedInfo + memories removed) |
 | **Enums** | 1 (info_type removed) |
 | **CRUD Operations** | 7 (simplified, mem0 handles memory) |
-| **Embedding Dimension** | 1536 (mem0 embedding-001) |
+| **Embedding Dimension** | 1536 (gemini-embedding-001) |
+| **Memory Service** | Python FastAPI + mem0ai SDK |
 | **Max Pool Connections** | 20 (prod) / 1 (dev) |
 | **LLM Task Types** | 5 |
 | **System Prompts** | 5 |
 | **Test Suites** | 4 (LLM layer) |
 | **Test Coverage** | 33/33 PASS (100%) |
-| **Code Reduction (Phase 03)** | 70% (~500 lines → ~150 lines) |
-| **Dashboard Components** | Shadcn/ui + custom (planned) |
+| **Dashboard Components** | Shadcn/ui + custom |
 | **Codebase Files** | ~150+ files (repomix snapshot available) |
 
 ---
 
-*Phase 01 (Dashboard): Project setup complete with Next.js 15, Tailwind CSS, Shadcn/ui, Zustand state management*
-*Phase 03 REFACTORED: mem0 OSS self-hosted with 70% code reduction, Gemini 2.5-flash-lite LLM + embedding-001 (1536D)*
-*Phase 04 complete: LLM layer integrated with task routing, fallback mechanism, Vietnamese prompts, streaming support, and 33/33 tests passing.*
+*Phase 03 REFACTORED: Python FastAPI memory service with mem0ai SDK, Gemini 2.5-flash-lite LLM + gemini-embedding-001 (1536D)*
+*Phase 04 complete: LLM layer integrated with task routing, fallback mechanism, Vietnamese prompts, streaming support*
+*Phase 10 (Dashboard): Complete with Next.js 15, React 19, Tailwind CSS, Shadcn/ui, real-time SSE updates*
