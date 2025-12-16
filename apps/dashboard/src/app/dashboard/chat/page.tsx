@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, RefreshCw } from 'lucide-react';
-import { Button, Card, Badge, Icon } from '@/components/ui';
-import { TypingIndicator } from '@/components/ui/typing-indicator';
+import { Send, RefreshCw, Bot } from 'lucide-react';
+import { Button, Badge, Icon } from '@/components/ui';
+import { ChatBubble } from '@/components/ui/chat-bubble';
 
 interface Message {
   id: string;
@@ -137,6 +137,16 @@ export default function ChatPage() {
     setInput('');
     setIsLoading(true);
 
+    // Create placeholder for streaming response
+    const assistantMessageId = crypto.randomUUID();
+    const assistantMessage: Message = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      createdAt: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, assistantMessage]);
+
     try {
       const context = buildContext();
 
@@ -148,35 +158,83 @@ export default function ChatPage() {
           conversationId,
           context,
           useMemory: settings.useMemory,
+          stream: true,
         }),
       });
 
-      const data = await response.json();
-
-      if (data.conversationId && !conversationId) {
-        setConversationId(data.conversationId);
+      // Get conversationId from header
+      const newConvId = response.headers.get('X-Conversation-Id');
+      if (newConvId && !conversationId) {
+        setConversationId(newConvId);
       }
 
-      const assistantMessage: Message = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: data.response || 'Xin lỗi, có lỗi xảy ra.',
-        createdAt: new Date().toISOString(),
-      };
+      if (!response.ok || !response.body) {
+        throw new Error('Stream failed');
+      }
 
-      setMessages(prev => [...prev, assistantMessage]);
+      // Read SSE stream
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
 
-      // Refresh memories after each message (with delay for mem0 to process)
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const text = decoder.decode(value);
+        const lines = text.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.content) {
+                fullContent += data.content;
+                // Update message content in real-time
+                setMessages(prev =>
+                  prev.map(msg =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: fullContent }
+                      : msg
+                  )
+                );
+              }
+              if (data.done) {
+                // Stream complete
+                break;
+              }
+              if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              // Ignore parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+
+      // If no content received, show error
+      if (!fullContent) {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === assistantMessageId
+              ? { ...msg, content: 'Xin lỗi, có lỗi xảy ra.' }
+              : msg
+          )
+        );
+      }
+
+      // Refresh memories after message
       setTimeout(() => fetchMemories(), 1500);
     } catch (error) {
       console.error('Chat error:', error);
-      const errorMessage: Message = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: 'Không thể kết nối với server. Vui lòng thử lại.',
-        createdAt: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === assistantMessageId
+            ? { ...msg, content: 'Không thể kết nối với server. Vui lòng thử lại.' }
+            : msg
+        )
+      );
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
@@ -242,50 +300,22 @@ export default function ChatPage() {
               </div>
             ) : (
               messages.map((message) => (
-                <div
+                <ChatBubble
                   key={message.id}
-                  className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  {message.role === 'assistant' && (
-                    <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/25">
-                      <Bot className="w-5 h-5 text-white" />
-                    </div>
-                  )}
-                  <div className={`max-w-[75%] ${message.role === 'user' ? 'order-first' : ''}`}>
-                    <Card
-                      variant="default"
-                      padding="md"
-                      className={
-                        message.role === 'user'
-                          ? 'bg-primary-600 text-white border-transparent'
-                          : 'bg-white text-neutral-900 border-neutral-200'
-                      }
-                    >
-                      <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                    </Card>
-                    <p className={`text-xs mt-1.5 px-1 ${
-                      message.role === 'user' ? 'text-right text-neutral-400' : 'text-neutral-400'
-                    }`}>
-                      {formatTime(message.createdAt)}
-                    </p>
-                  </div>
-                  {message.role === 'user' && (
-                    <div className="shrink-0 w-10 h-10 rounded-xl bg-neutral-200 flex items-center justify-center">
-                      <User className="w-5 h-5 text-neutral-600" />
-                    </div>
-                  )}
-                </div>
+                  variant={message.role}
+                  message={message.content}
+                  timestamp={formatTime(message.createdAt)}
+                  avatar={{ name: message.role === 'assistant' ? 'Jarvis' : 'User' }}
+                />
               ))
             )}
             {isLoading && (
-              <div className="flex gap-4 justify-start">
-                <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/25">
-                  <Bot className="w-5 h-5 text-white" />
-                </div>
-                <Card variant="default" padding="md" className="bg-white border-neutral-200">
-                  <TypingIndicator />
-                </Card>
-              </div>
+              <ChatBubble
+                variant="assistant"
+                message=""
+                isTyping
+                avatar={{ name: 'Jarvis' }}
+              />
             )}
             <div ref={messagesEndRef} />
           </div>
