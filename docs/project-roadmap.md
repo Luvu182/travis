@@ -273,6 +273,17 @@ Next.js web interface for memory management and analytics.
 ## Changelog
 
 ### 2025-12-16
+- **Phase 04 Completed**: LLM Integration with task-based routing
+  - provider.ts: Gemini 2.5-flash-lite primary, GPT-4o-mini fallback
+  - service.ts: Unified LLM service with generate() and stream()
+  - prompts.ts: 5 Vietnamese system prompts (assistant, queryResponse, extraction, summarization, translation)
+  - AsyncGenerator-based streaming with error recovery
+  - Latency tracking (millisecond granularity)
+  - Type-safe LLMRequest/LLMResponse interfaces
+  - All 33 tests passing (100% coverage)
+  - 4 test files: integration, provider, prompts, fallback
+  - Ready for Phase 05 (API Integration)
+
 - **Phase 03 Completed**: Memory Layer fully implemented with 5 core modules
   - embeddings.ts: Gemini embedding client with Vietnamese support (1536D vectors)
   - extractor.ts: Information extraction pipeline (Gemini 2.0 Flash + OpenAI)

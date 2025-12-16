@@ -1,4 +1,4 @@
-import { db, saveExtractedInfo, saveMemory } from '@luxbot/db';
+import { db, saveExtractedInfo, saveMemory } from '@travis/db';
 import { embedText } from './embeddings.js';
 import { normalizeDueDate, type ExtractedItem } from './extractor.js';
 

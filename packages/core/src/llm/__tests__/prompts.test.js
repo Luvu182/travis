@@ -34,7 +34,7 @@ test('Prompts - SYSTEM_PROMPTS object structure', async (t) => {
 test('Prompts - Vietnamese content validation', async (t) => {
   await t.test('assistant prompt contains key responsibilities', () => {
     const prompt = SYSTEM_PROMPTS.assistant;
-    assert.ok(prompt.includes('LuxBot'), 'should mention LuxBot name');
+    assert.ok(prompt.includes('Travis'), 'should mention Travis name');
     assert.ok(prompt.includes('ghi nhớ'), 'should mention memory functionality');
     assert.ok(prompt.includes('trả lời'), 'should mention response capability');
   });

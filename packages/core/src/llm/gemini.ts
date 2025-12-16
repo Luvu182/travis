@@ -1,6 +1,6 @@
 import { generateText, streamText } from 'ai';
 import { google } from '@ai-sdk/google';
-import { env } from '@luxbot/config';
+import { env } from '@travis/config';
 
 // Gemini 2.5-flash-lite model
 const gemini = google('gemini-2.5-flash-lite');

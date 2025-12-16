@@ -1,6 +1,6 @@
 import { google } from '@ai-sdk/google';
 import { embed } from 'ai';
-import { env } from '@luxbot/config';
+import { env } from '@travis/config';
 
 // Gemini embedding-001 produces 1536D embeddings (matches schema)
 /**

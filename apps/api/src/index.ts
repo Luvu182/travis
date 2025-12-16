@@ -45,13 +45,13 @@ app.route('/webhook/lark', larkWebhook);
 
 // Start server
 const port = Number(env.PORT);
-console.log(`Starting LuxBot API on port ${port}...`);
+console.log(`Starting Travis API on port ${port}...`);
 
 serve({
   fetch: app.fetch,
   port,
 }, (info) => {
-  console.log(`LuxBot API running at http://localhost:${info.port}`);
+  console.log(`Travis API running at http://localhost:${info.port}`);
 });
 
 export default app;
