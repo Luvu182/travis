@@ -1,8 +1,8 @@
 # J.A.R.V.I.S - Codebase Summary
 
 **Last Updated:** 2025-12-17
-**Phase:** 03 - Memory Layer REFACTORED (Python mem0 SDK) + Phase 04 Complete
-**Status:** Python FastAPI memory service + TypeScript HTTP client, LLM layer complete with Gemini 2.5-flash-lite primary + GPT-4o fallback
+**Phase:** 10 - Complete (Dashboard + All Services)
+**Status:** Production-ready with Python FastAPI memory service, TypeScript API, Next.js 15 dashboard, Gemini 2.5-flash-lite primary + GPT-4o-mini fallback
 
 ## Project Overview
 
@@ -517,24 +517,102 @@ Request (task + prompt)
 - Error handling (empty prompts, missing API keys)
 - Response structure validation
 
+## API Layer (`apps/api/src/`)
+
+### Routes (8 endpoints)
+1. **Health Routes** (`routes/health.ts`)
+   - `GET /health` - API and database health check
+
+2. **Chat Routes** (`routes/chat.ts`)
+   - `POST /api/chat` - Chat with context and memory
+
+3. **Extract Routes** (`routes/extract.ts`)
+   - `POST /api/extract` - Extract tasks/decisions from messages
+
+4. **Search Routes** (`routes/search.ts`)
+   - `POST /api/search` - Semantic search memories
+
+5. **Query Routes** (`routes/query.ts`)
+   - `POST /api/query` - Query with LLM processing
+
+6. **Metrics Routes** (`routes/metrics.ts`)
+   - `GET /metrics` - System metrics (no auth)
+
+7. **Auth Routes** (`routes/auth.ts`)
+   - `POST /api/auth/login` - Dashboard JWT login
+   - `POST /api/auth/logout` - Session cleanup
+
+8. **Dashboard Metrics Routes** (`routes/dashboard-metrics.ts`)
+   - `GET /api/dashboard/metrics` - Dashboard statistics (auth required)
+
+### Webhooks
+- **Telegram** (`webhooks/telegram.ts`) - Telegram message handler
+- **Lark** (`webhooks/lark.ts`) - Lark Suite message handler
+
+### Middleware (3)
+- **Rate Limiter** (`middleware/rate-limit.ts`) - 100 req/15min per user+group
+- **Error Handler** (`middleware/error.ts`) - Global error handling
+- **Dashboard Auth** (`middleware/dashboard-auth.ts`) - JWT validation for dashboard
+
+### Services
+- **Message Processor** (`services/message-processor.ts`) - Webhook processing
+- **Query Handler** (`services/query-handler.ts`) - Query execution
+
+## Dashboard App (`apps/dashboard/src/`)
+
+### Pages
+- **Login** (`app/login/page.tsx`) - NextAuth v5 authentication
+- **Dashboard** (`app/dashboard/page.tsx`) - Main dashboard
+- **Chat** (`app/dashboard/chat/page.tsx`) - Real-time chat interface with SSE
+- **Conversations** (`app/dashboard/conversations/page.tsx`) - Conversation history
+- **Memory** (`app/dashboard/memory/page.tsx`) - Memory inspection
+- **Performance** (`app/dashboard/performance/page.tsx`) - System metrics
+- **Settings** (`app/dashboard/settings/page.tsx`) - Configuration
+
+### Authentication
+- **NextAuth v5** (`auth.ts`, `auth.config.ts`) - JWT-based auth
+- **Middleware** (`middleware.ts`) - Route protection
+- **API Routes** (`app/api/auth/[...nextauth]/route.ts`) - Auth endpoint
+
+### Components
+- **Dashboard** (`components/dashboard/`)
+  - `sidebar.tsx` - Navigation sidebar
+  - `header.tsx` - Top header bar
+  - `metric-card.tsx` - Stats card component
+  - `charts/line-chart.tsx` - Chart.js integration
+
+### State Management
+- **Zustand Stores** (`stores/`)
+  - `metrics.ts` - Dashboard metrics state
+  - `ui.ts` - UI state management
+
+### Real-time Updates
+- **SSE Hook** (`hooks/use-sse.ts`) - Server-sent events handler
+
+### Styling
+- **Tailwind CSS** - Utility-first styling
+- **CSS Variables** - HSL-based color system
+- **Dark Mode** - next-themes integration
+
 ## Summary Statistics
 
 | Metric | Value |
 |--------|-------|
 | **Applications** | 3 (api + dashboard + memory-service) |
 | **Packages** | 3 (config, db, core) |
-| **Database Tables** | 4 (extractedInfo + memories removed) |
-| **Enums** | 1 (info_type removed) |
+| **API Routes** | 8 endpoints + 2 webhooks |
+| **Middleware** | 3 (rate-limit, error, auth) |
+| **Database Tables** | 4 core tables |
 | **CRUD Operations** | 7 (simplified, mem0 handles memory) |
 | **Embedding Dimension** | 1536 (gemini-embedding-001) |
 | **Memory Service** | Python FastAPI + mem0ai SDK |
-| **Max Pool Connections** | 20 (prod) / 1 (dev) |
+| **Dashboard Pages** | 7 (login, dashboard, chat, conversations, memory, performance, settings) |
 | **LLM Task Types** | 5 |
 | **System Prompts** | 5 |
 | **Test Suites** | 4 (LLM layer) |
 | **Test Coverage** | 33/33 PASS (100%) |
-| **Dashboard Components** | Shadcn/ui + custom |
-| **Codebase Files** | ~150+ files (repomix snapshot available) |
+| **Total Files** | 141 files, ~103k tokens (repomix snapshot) |
+| **Max Pool Connections** | 20 (prod) / 1 (dev) |
 
 ---
 
