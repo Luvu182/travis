@@ -81,3 +81,12 @@ venv
 .claude/settings.bak.json
 # Dashboard build
 apps/dashboard/.next/
+
+# Turbo cache
+.turbo/
+
+# Logs
+logs/
+
+# Screenshots
+*.png
