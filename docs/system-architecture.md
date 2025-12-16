@@ -1,8 +1,8 @@
 # LuxBot - System Architecture
 
 **Last Updated:** 2025-12-16
-**Phase:** 03 - Memory Layer Implementation
-**Document Version:** 1.1
+**Phase:** 04 - LLM Integration Completion
+**Document Version:** 1.2
 
 ## Architecture Overview
 
@@ -32,10 +32,17 @@ LuxBot is a modular, horizontally-scalable system designed for multi-platform ch
    │  Layer │      │  (Drizzle ORM)  │   │  Manager  │
    │        │      │  + pgvector     │   │           │
    ├────────┤      ├─────────────────┤   ├───────────┤
-   │ mem0   │      │ 6 Tables        │   │ .env      │
-   │ Gemini │      │ 14 Operations   │   │ Validation│
-   │ OpenAI │      │ Vector Search   │   │           │
-   └────────┘      └────────────────┘   └───────────┘
+   │ Memory:    │   │ 6 Tables        │   │ .env      │
+   │ ├─ embed   │   │ 14 Operations   │   │ Validation│
+   │ ├─ extract │   │ Vector Search   │   │           │
+   │ ├─ store   │   │                 │   │           │
+   │ └─ retrieve│   │                 │   │           │
+   │            │   │                 │   │           │
+   │ LLM (NEW): │   │                 │   │           │
+   │ ├─ Gemini  │   │                 │   │           │
+   │ ├─ Fallback│   │                 │   │           │
+   │ └─ Stream  │   │                 │   │           │
+   └────────────┘   └────────────────┘   └───────────┘
 ```
 
 ## Components
@@ -118,15 +125,38 @@ d) **Retrieval Layer (retriever.ts)**
   - Result deduplication across multiple queries
   - Sorted by similarity score
 
-#### 2.2 LLM Processing
-- **Primary:** Google Gemini 2.0-flash-exp
-  - Low-latency responses
-  - Embedding generation (768D via text-embedding-004)
-  - Vietnamese-optimized extraction
+#### 2.2 LLM Layer (Phase 04 - NEW)
+**Unified LLM Service with Task-Based Routing**
 
-- **Fallback:** OpenAI GPT-4 (future)
-  - Used if Gemini fails
+a) **Provider (`provider.ts`)**
+- Model selection: Gemini 2.5-flash-lite primary, GPT-4o-mini fallback
+- Task routing: 5 task types (chat, extraction, summarization, query, translation)
+- Fallback mechanism: Automatic bidirectional fallback on errors
+- Type-safe model handling via Vercel AI SDK
+
+b) **Service (`service.ts`)**
+- `generate()` - Synchronous generation with error recovery
+- `stream()` - AsyncGenerator-based streaming with fallback
+- Latency tracking (ms granularity)
+- Error recovery: Primary failure → automatic fallback
+
+c) **Vietnamese System Prompts (`prompts.ts`)**
+- **assistant** - General chatbot with memory & task tracking
+- **queryResponse** - Memory-based Q&A
+- **extraction** - Structured info extraction from messages
+- **summarization** - Conversation synthesis
+- **translation** - Vietnamese ↔ English translation
+
+**LLM Processing Pipeline:**
+- **Primary:** Google Gemini 2.5-flash-lite (via Vercel AI SDK)
+  - Fast, cost-effective for all task types
+  - Vietnamese-optimized responses
+  - Handles extraction, summarization, translation
+
+- **Fallback:** OpenAI GPT-4o-mini
+  - Used when Gemini API fails
   - Same processing capabilities
+  - Seamless switchover
 
 #### 2.3 Information Extraction Pipeline
 Extracts structured data from unstructured messages:
@@ -364,16 +394,29 @@ pnpm dev
 - **Storage:** `groups.metadata`, `users.metadata`
 - **Flow:** Webhook → saveMessage → extractedInfo → Response
 
-### Gemini API
-- **Models:**
-  - `gemini-2.0-flash-exp` - LLM for extraction (low-latency)
-  - `text-embedding-004` - Embeddings (768D output)
+### Google Gemini API
+- **Primary LLM:** `gemini-2.5-flash-lite`
+  - All task types (chat, extraction, summarization, query, translation)
+  - Vietnamese-optimized responses
+  - Via Vercel AI SDK (generateText, streamText)
+  - Default for all routing decisions
+
+- **Embeddings:** `text-embedding-004` (future memory integration)
+  - 768D vector output
+  - Semantic search for long-term memory
+
 - **Operations:**
-  - Information extraction from messages (Vietnamese-optimized)
-  - Response generation
-  - Embedding generation for vector search (768D)
-  - Confidence scoring for extraction confidence ≥0.7
-- **Fallback:** OpenAI GPT-4 (future)
+  - Task-based text generation (5 task types)
+  - Streaming support via AsyncGenerator
+  - Vietnamese language optimization
+  - Automatic fallback on API errors
+
+### OpenAI API
+- **Fallback LLM:** `gpt-4o-mini`
+  - Used when Gemini API fails
+  - Same processing capabilities
+  - Via Vercel AI SDK integration
+  - Bidirectional fallback (OpenAI → Gemini possible)
 
 ### PostgreSQL + pgvector
 - **Tables:** 6 core + 1 audit
@@ -479,23 +522,34 @@ pnpm dev
 - Storage layer with automatic embedding generation
 - Retrieval layer with multi-search and deduplication
 - Vector search with pgvector cosine similarity
+- Status: 43/43 tests passing
 
-### Phase 04 (API Integration) - UPCOMING
+### Phase 04 (LLM Integration) - COMPLETED
+- Gemini 2.5-flash-lite primary model with Vercel AI SDK
+- GPT-4o-mini automatic fallback mechanism
+- Task-based routing (5 task types: chat, extraction, summarization, query, translation)
+- Vietnamese system prompts optimized for each task
+- Streaming support via AsyncGenerator with fallback
+- Type-safe LLMRequest/LLMResponse interfaces
+- Latency tracking and error recovery
+- Status: 33/33 tests passing (100% coverage)
+
+### Phase 05 (API Integration) - UPCOMING
 - HTTP endpoints for memory queries
-- Webhook memory context injection
-- Response generation with memory augmentation
+- Webhook message processing with LLM extraction
+- Response generation with memory augmentation + LLM
+- Rate limiting and error handling
 
-### Phase 05 (Production Hardening)
-- HNSW vector indexes
+### Phase 06 (Bot Integration)
+- Telegram bot (grammY) webhook handler
+- Lark Suite event handler
+- Message normalization and routing
+
+### Phase 07 (Production Hardening)
+- HNSW vector indexes for scalable search
 - Query result caching (Redis)
 - Soft deletes and audit logging
-- Rate limiting and throttling
-
-### Phase 06 (Advanced Features)
-- Multi-language support optimization
-- Custom embeddings model training
-- Conversation context windows
-- Scheduled task notifications
+- Rate limiting per user/group
 
 ## Configuration Reference
 

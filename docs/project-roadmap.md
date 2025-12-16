@@ -6,18 +6,19 @@
 
 Vietnamese executive assistant chatbot platform integrating Telegram & Lark group monitoring, AI-powered information extraction, long-term memory via mem0, and web dashboard for memory management. Multi-platform deployment with PostgreSQL + pgvector vector database.
 
-**Overall Completion:** 30%
+**Overall Completion:** 40%
 - Phase 01: Pending (0%)
 - Phase 02: DONE (100%)
 - Phase 03: DONE (100%)
-- Phase 04-10: Pending (0% each)
+- Phase 04: DONE (100%)
+- Phase 05-10: Pending (0% each)
 
 ## Milestones & Timeline
 
 | Milestone | Target | Status | Completion % |
 |-----------|--------|--------|--------------|
-| Foundation (P01-P02) | 2025-12-20 | In Progress | 50% |
-| AI Integration (P03-P04) | 2025-12-25 | In Progress | 50% |
+| Foundation (P01-P02) | 2025-12-20 | Partial | 50% |
+| AI Integration (P03-P04) | 2025-12-25 | DONE | 100% |
 | Platform Bots (P05-P06) | 2025-12-30 | Pending | 0% |
 | Processing Pipeline (P07-P08) | 2026-01-05 | Pending | 0% |
 | Deployment & Dashboard (P09-P10) | 2026-01-10 | Pending | 0% |
@@ -102,42 +103,62 @@ mem0 integration, fact extraction, and deduplication logic.
 ---
 
 ### Phase 04: LLM Integration
-**Status:** Pending | **Completion:** 0%
+**Status:** DONE | **Completion:** 100% | **Completed:** 2025-12-16
 
-Gemini & OpenAI integration via Vercel AI SDK.
+Task-based LLM routing with automatic fallback, Vietnamese prompts, and streaming support.
 
-**Planned Deliverables:**
-- Vercel AI SDK setup
-- Gemini 2.0 Flash primary provider
-- OpenAI GPT-4o fallback
-- Prompt templates (Vietnamese)
-- Error handling & retries
+**Achievements:**
+- Gemini 2.5-flash-lite primary model (Vercel AI SDK)
+- GPT-4o-mini automatic fallback on errors
+- 5 task-based routing types: chat, extraction, summarization, query, translation
+- 5 Vietnamese system prompts optimized per task
+- AsyncGenerator-based streaming with error recovery
+- Type-safe LLMRequest/LLMResponse interfaces
+- Latency tracking (millisecond granularity)
+- Automatic bidirectional fallback mechanism
+
+**Quality Metrics:**
+- Build: PASS
+- Tests: 33/33 PASS (100% coverage)
+- Test files: 4 (service integration, provider routing, prompts, fallback)
+- Type Safety: 100%
+- Code Review: Complete
+
+**Files Created:**
+- `packages/core/src/llm/provider.ts` - Model selection & fallback routing
+- `packages/core/src/llm/service.ts` - Unified LLM service (generate + stream)
+- `packages/core/src/llm/prompts.ts` - 5 Vietnamese system prompts
+- `packages/core/src/llm/index.ts` - Module orchestration
+- Test files: integration, provider, prompts, fallback tests
 
 ---
 
-### Phase 05: Telegram Bot
+### Phase 05: API Integration
 **Status:** Pending | **Completion:** 0%
 
-grammY webhook handler for Telegram group monitoring.
+HTTP endpoints for memory queries and webhook message processing with LLM.
 
 **Planned Deliverables:**
-- grammY bot initialization
-- Webhook endpoint handler
-- Message parsing and normalization
-- Group/user management
+- POST /chat - Generate responses with memory context
+- POST /extract - Extract info from messages
+- POST /search - Vector semantic search
+- Webhook memory injection
+- Response generation with LLM + memory
+- Rate limiting per group/user
 
 ---
 
-### Phase 06: Lark Bot
+### Phase 06: Bot Integration
 **Status:** Pending | **Completion:** 0%
 
-Lark Suite event handler for message and group monitoring.
+Telegram and Lark Suite bot handlers for message processing.
 
 **Planned Deliverables:**
-- Lark SDK integration
-- Event subscription handler
+- Telegram webhook handler (grammY)
+- Lark Suite event handler
 - Message parsing and normalization
-- Group metadata sync
+- User/group synchronization
+- Message routing to extraction pipeline
 
 ---
 

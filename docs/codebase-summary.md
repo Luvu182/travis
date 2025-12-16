@@ -1,8 +1,8 @@
 # LuxBot - Codebase Summary
 
 **Last Updated:** 2025-12-16
-**Phase:** 02 - Database Schema Completion
-**Status:** Core database layer complete with vector search capabilities
+**Phase:** 04 - LLM Integration Completion
+**Status:** LLM layer complete with Gemini 2.5-flash-lite primary + GPT-4o fallback, task-based routing, Vietnamese prompts, and streaming support
 
 ## Project Overview
 
@@ -17,7 +17,9 @@ LuxBot (Monorepo)
 ├── packages/
 │   ├── config/           # Environment validation & config mgmt
 │   ├── db/               # Database layer (Drizzle ORM + pgvector)
-│   └── core/             # AI & memory logic (mem0, Gemini, OpenAI)
+│   └── core/             # AI & memory logic
+│       ├── memory/       # Embeddings, extraction, storage, retrieval
+│       └── llm/          # LLM service with task routing & fallback
 └── docker/               # PostgreSQL + pgvector setup
 ```
 
@@ -33,8 +35,8 @@ LuxBot (Monorepo)
 | **Vector Extension** | pgvector | 0.5+ |
 | **ORM** | Drizzle ORM | Latest |
 | **Embeddings** | Gemini embedding-001 | 1536D vectors |
-| **LLM Primary** | Google Gemini Flash | Latest |
-| **LLM Fallback** | OpenAI GPT-4 | Latest |
+| **LLM Primary** | Google Gemini 2.5-flash-lite | Latest |
+| **LLM Fallback** | OpenAI GPT-4o-mini | Latest |
 | **Memory Framework** | mem0 + Vercel AI SDK | Latest |
 | **Telegram SDK** | grammY | Latest |
 | **Lark SDK** | @larksuiteoapi/node-sdk | Latest |
@@ -451,18 +453,101 @@ packages/db/
 └── drizzle.config.ts      # Drizzle configuration
 ```
 
+## LLM Layer (`packages/core/src/llm`)
+
+### Overview
+Task-based LLM routing with automatic fallback, Vietnamese system prompts, streaming support via AsyncGenerator.
+
+### Components
+
+#### 1. Provider (`provider.ts`)
+**Models:**
+- **Primary:** Gemini 2.5-flash-lite (all tasks via Vercel AI SDK)
+- **Fallback:** GPT-4o-mini (used when Gemini fails)
+
+**Task Types (5):**
+- `chat` - General conversation with Vietnamese context
+- `extraction` - Info extraction (tasks, decisions, deadlines)
+- `summarization` - Conversation summaries
+- `query` - Memory-based Q&A responses
+- `translation` - Vietnamese ↔ English translation
+
+**Functions:**
+- `selectModel(task)` - Routes task to appropriate model
+- `getFallback(primary)` - Selects fallback (Gemini ↔ OpenAI)
+- `getModelName(model)` - Returns human-readable model name
+
+#### 2. Service (`service.ts`)
+**Interfaces:**
+- `LLMRequest` - Task type, system prompt, prompt, temperature, maxTokens
+- `LLMResponse` - Text, model name, fallback flag, latency in ms
+
+**Functions:**
+- `generate(request)` - Synchronous text generation with automatic fallback
+  - Catches primary model errors
+  - Falls back to GPT-4o-mini
+  - Returns latency metrics
+  - Type-safe response structure
+
+- `stream(request)` - AsyncGenerator-based streaming with fallback
+  - Yields text chunks as they arrive
+  - Automatic fallback on stream failure
+  - Supports long-running responses
+
+#### 3. System Prompts (`prompts.ts`)
+**Vietnamese System Prompts (5):**
+1. **assistant** - General chatbot persona with memory & task tracking
+2. **queryResponse** - Q&A based on stored information
+3. **extraction** - Structured info extraction (tasks/decisions/deadlines)
+4. **summarization** - Conversation summarization with action items
+5. **translation** - Professional Vietnamese ↔ English translation
+
+**Functions:**
+- `getSystemPrompt(task)` - Retrieves prompt for specific task
+
+### Architecture
+```
+Request (task + prompt)
+    │
+    ├─▶ selectModel(task) → Gemini 2.5-flash-lite
+    │
+    ├─▶ generateText / streamText (Vercel AI SDK)
+    │
+    ├─▶ [On Error] getFallback() → GPT-4o-mini
+    │
+    └─▶ Response {text, model, usedFallback, latencyMs}
+```
+
+### Test Coverage
+**4 Test Files, 33 Tests Passing:**
+- `service.integration.test.ts` - Fallback behavior, Vietnamese responses, streaming
+- `provider.test.ts` - Model selection & fallback routing
+- `prompts.test.ts` - System prompt validation
+- `fallback.test.ts` - Error handling & recovery
+
+**Test Categories:**
+- Integration tests (chat, query, extraction, summarization tasks)
+- Streaming validation (chunk accumulation, content preservation)
+- Latency benchmarking (<10s per request, <5s average)
+- Error handling (empty prompts, missing API keys)
+- Response structure validation
+
 ## Summary Statistics
 
 | Metric | Value |
 |--------|-------|
-| **Tables** | 6 |
+| **Database Tables** | 6 |
 | **Enums** | 2 |
-| **Indexes** | 9 |
+| **Database Indexes** | 9 |
 | **CRUD Operations** | 14 |
 | **Vector-enabled Tables** | 2 |
 | **Embedding Dimension** | 1536 |
 | **Max Pool Connections** | 20 (prod) / 1 (dev) |
+| **LLM Task Types** | 5 |
+| **System Prompts** | 5 |
+| **Test Suites** | 4 |
+| **Test Coverage** | 33/33 PASS (100%) |
 
 ---
 
-*Phase 02 complete: Database schema fully implemented with vector search, connection pooling, and 14 CRUD operations ready for API integration.*
+*Phase 04 complete: LLM layer integrated with task routing, fallback mechanism, Vietnamese prompts, streaming support, and 33/33 tests passing.*
