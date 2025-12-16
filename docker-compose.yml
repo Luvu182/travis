@@ -33,7 +33,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      memory:
+        condition: service_healthy
     environment:
+      # Memory Service
+      MEMORY_SERVICE_URL: http://memory:8000
       # Node environment
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${API_PORT:-3000}
@@ -48,15 +52,15 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:?TELEGRAM_WEBHOOK_SECRET is required}
 
-      # Lark Suite
-      LARK_APP_ID: ${LARK_APP_ID:?LARK_APP_ID is required}
-      LARK_APP_SECRET: ${LARK_APP_SECRET:?LARK_APP_SECRET is required}
-      LARK_ENCRYPT_KEY: ${LARK_ENCRYPT_KEY:?LARK_ENCRYPT_KEY is required}
-      LARK_VERIFICATION_TOKEN: ${LARK_VERIFICATION_TOKEN:?LARK_VERIFICATION_TOKEN is required}
+      # Lark Suite (optional - can be added later)
+      LARK_APP_ID: ${LARK_APP_ID:-}
+      LARK_APP_SECRET: ${LARK_APP_SECRET:-}
+      LARK_ENCRYPT_KEY: ${LARK_ENCRYPT_KEY:-}
+      LARK_VERIFICATION_TOKEN: ${LARK_VERIFICATION_TOKEN:-}
 
       # LLM Providers
       GEMINI_API_KEY: ${GEMINI_API_KEY:?GEMINI_API_KEY is required}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
 
       # mem0 (optional)
       MEM0_API_KEY: ${MEM0_API_KEY:-}
@@ -64,6 +68,42 @@ services:
       - "${API_PORT:-3000}:3000"
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - jarvis-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==================== MEMORY SERVICE ====================
+  memory:
+    build:
+      context: ./apps/memory-service
+      dockerfile: Dockerfile
+    container_name: jarvis-memory
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB:-jarvis}
+
+      # LLM Provider
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    ports:
+      - "${MEMORY_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
