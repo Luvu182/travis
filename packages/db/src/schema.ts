@@ -17,12 +17,76 @@ import { sql } from 'drizzle-orm';
 // ==================== ENUMS ====================
 
 export const platformEnum = pgEnum('platform_type', ['telegram', 'lark']);
+export const apiProviderEnum = pgEnum('api_provider', ['gemini', 'openai', 'anthropic']);
+
+// ==================== WORKSPACE TABLES (Multi-tenant) ====================
+
+// Workspaces - isolated environments for each user's bots and data
+export const workspaces = pgTable('workspaces', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ownerId: text('owner_id').notNull().references(() => adminUsers.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 100 }).notNull().unique(),
+  description: text('description'),
+  isActive: boolean('is_active').notNull().default(true),
+  settings: jsonb('settings').default({}), // LLM preferences, etc.
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  ownerIdx: index('idx_workspaces_owner').on(table.ownerId),
+  slugIdx: uniqueIndex('idx_workspaces_slug').on(table.slug),
+}));
+
+// Bot integrations - Telegram/Lark bots per workspace
+export const botIntegrations = pgTable('bot_integrations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+  platform: platformEnum('platform').notNull(),
+  name: varchar('name', { length: 255 }), // Bot display name
+  // Telegram fields
+  botToken: text('bot_token'), // Encrypted
+  botUsername: varchar('bot_username', { length: 255 }),
+  webhookSecret: text('webhook_secret'),
+  // Lark fields
+  appId: varchar('app_id', { length: 255 }),
+  appSecret: text('app_secret'), // Encrypted
+  encryptKey: text('encrypt_key'), // Encrypted
+  verificationToken: text('verification_token'),
+  // Status
+  isActive: boolean('is_active').notNull().default(true),
+  lastActivityAt: timestamp('last_activity_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  workspaceIdx: index('idx_bot_integrations_workspace').on(table.workspaceId),
+  platformIdx: index('idx_bot_integrations_platform').on(table.platform),
+  // Unique bot token per platform
+  botTokenIdx: uniqueIndex('idx_bot_integrations_token').on(table.botToken),
+}));
+
+// API keys - LLM provider keys per workspace
+export const workspaceApiKeys = pgTable('workspace_api_keys', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+  provider: apiProviderEnum('provider').notNull(),
+  apiKey: text('api_key').notNull(), // Encrypted
+  isActive: boolean('is_active').notNull().default(true),
+  lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  workspaceIdx: index('idx_workspace_api_keys_workspace').on(table.workspaceId),
+  // One key per provider per workspace
+  workspaceProviderUnique: uniqueIndex('idx_workspace_api_keys_unique')
+    .on(table.workspaceId, table.provider),
+}));
 
 // ==================== TABLES ====================
 
-// Groups/Chats table
+// Groups/Chats table (updated with workspace reference)
 export const groups = pgTable('groups', {
   id: uuid('id').primaryKey().defaultRandom(),
+  workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
   platform: platformEnum('platform').notNull(),
   platformGroupId: varchar('platform_group_id', { length: 255 }).notNull(),
   name: varchar('name', { length: 255 }),
@@ -30,8 +94,10 @@ export const groups = pgTable('groups', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   metadata: jsonb('metadata').default({}),
 }, (table) => ({
-  platformGroupUnique: uniqueIndex('idx_groups_platform_group')
-    .on(table.platform, table.platformGroupId),
+  workspaceIdx: index('idx_groups_workspace').on(table.workspaceId),
+  // Unique group per workspace + platform + platformGroupId
+  workspacePlatformGroupUnique: uniqueIndex('idx_groups_workspace_platform_group')
+    .on(table.workspaceId, table.platform, table.platformGroupId),
 }));
 
 // Users table
@@ -222,3 +288,12 @@ export type NewWebConversation = typeof webConversations.$inferInsert;
 
 export type WebMessage = typeof webMessages.$inferSelect;
 export type NewWebMessage = typeof webMessages.$inferInsert;
+
+export type Workspace = typeof workspaces.$inferSelect;
+export type NewWorkspace = typeof workspaces.$inferInsert;
+
+export type BotIntegration = typeof botIntegrations.$inferSelect;
+export type NewBotIntegration = typeof botIntegrations.$inferInsert;
+
+export type WorkspaceApiKey = typeof workspaceApiKeys.$inferSelect;
+export type NewWorkspaceApiKey = typeof workspaceApiKeys.$inferInsert;

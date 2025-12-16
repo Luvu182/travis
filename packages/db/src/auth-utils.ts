@@ -1,38 +1,56 @@
-import bcrypt from 'bcrypt';
+import { scrypt, randomBytes, timingSafeEqual, ScryptOptions } from 'crypto';
 
-const SALT_ROUNDS = 12;
+// scrypt parameters (OWASP recommended)
+const SALT_LENGTH = 32;
+const KEY_LENGTH = 64;
+const SCRYPT_OPTIONS: ScryptOptions = {
+  N: 16384, // cost
+  r: 8,     // block size
+  p: 1,     // parallelization
+};
+
+function scryptAsync(password: string, salt: Buffer, keylen: number, options: ScryptOptions): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    scrypt(password, salt, keylen, options, (err, derivedKey) => {
+      if (err) reject(err);
+      else resolve(derivedKey);
+    });
+  });
+}
 
 /**
- * Hash password with bcrypt (12 rounds)
- * @param password - Plain text password
- * @returns Hashed password
+ * Hash password with scrypt (Node.js crypto built-in)
+ * Format: salt:hash (both hex encoded)
  */
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, SALT_ROUNDS);
+  const salt = randomBytes(SALT_LENGTH);
+  const hash = await scryptAsync(password, salt, KEY_LENGTH, SCRYPT_OPTIONS);
+  return `${salt.toString('hex')}:${hash.toString('hex')}`;
 }
 
 /**
  * Verify password against hash (constant-time comparison)
- * @param password - Plain text password
- * @param hash - Stored password hash
- * @returns True if match
  */
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
+export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  const [saltHex, hashHex] = storedHash.split(':');
+  if (!saltHex || !hashHex) return false;
+
+  const salt = Buffer.from(saltHex, 'hex');
+  const storedHashBuffer = Buffer.from(hashHex, 'hex');
+
+  const hash = await scryptAsync(password, salt, KEY_LENGTH, SCRYPT_OPTIONS);
+  return timingSafeEqual(hash, storedHashBuffer);
 }
 
 /**
- * Validate password strength (basic requirements)
- * @param password - Plain text password
- * @returns Validation result with message
+ * Validate password strength
  */
 export function validatePasswordStrength(password: string): { valid: boolean; message?: string } {
   if (password.length < 8) {
     return { valid: false, message: 'Password must be at least 8 characters' };
   }
-  if (password.length > 72) {
-    // bcrypt max input length
-    return { valid: false, message: 'Password must be 72 characters or less' };
+  if (password.length > 128) {
+    return { valid: false, message: 'Password must be 128 characters or less' };
   }
   return { valid: true };
 }

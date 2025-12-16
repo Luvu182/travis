@@ -9,19 +9,23 @@ import { hashPassword, verifyPassword, validatePasswordStrength } from './auth-u
 export async function upsertGroup(data: {
   platform: 'telegram' | 'lark';
   platformGroupId: string;
+  workspaceId?: string;
   name?: string;
   metadata?: Record<string, unknown>;
 }) {
+  // For multi-tenant mode with workspace: use workspace + platform + platformGroupId uniqueness
+  // This uses the idx_groups_workspace_platform_group unique constraint
   const result = await db
     .insert(groups)
     .values({
       platform: data.platform,
       platformGroupId: data.platformGroupId,
+      workspaceId: data.workspaceId,
       name: data.name,
       metadata: data.metadata,
     })
     .onConflictDoUpdate({
-      target: [groups.platform, groups.platformGroupId],
+      target: [groups.workspaceId, groups.platform, groups.platformGroupId],
       set: {
         name: sql`COALESCE(EXCLUDED.name, ${groups.name})`,
         metadata: sql`COALESCE(EXCLUDED.metadata, ${groups.metadata})`,
@@ -231,12 +235,11 @@ export async function verifyAuthUser(
 
   if (!user[0]) return null;
   if (!user[0].isActive) return null;
-  if (!user[0].passwordHash) return null; // No password set
+  if (!user[0].passwordHash) return null;
 
   const valid = await verifyPassword(password, user[0].passwordHash);
   if (!valid) return null;
 
-  // Update last login
   await updateLastLogin(user[0].id);
 
   return {
