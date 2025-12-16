@@ -1,4 +1,4 @@
-import { searchByVector, searchMemories, getRecentMemories as dbGetRecentMemories } from '@travis/db';
+import { searchByVector, searchMemories, getRecentMemories as dbGetRecentMemories } from '@luxbot/db';
 import { embedText } from './embeddings.js';
 
 export interface MemorySearchResult {
