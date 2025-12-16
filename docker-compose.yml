@@ -76,6 +76,49 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # ==================== DASHBOARD SERVICE ====================
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://api:3000
+    container_name: jarvis-dashboard
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      # Node environment
+      NODE_ENV: production
+      PORT: 3001
+
+      # NextAuth
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
+      NEXTAUTH_URL: ${DASHBOARD_URL:-http://localhost:3001}
+
+      # Dashboard Auth
+      DASHBOARD_ADMIN_EMAIL: ${DASHBOARD_ADMIN_EMAIL:-admin@jarvis.local}
+      DASHBOARD_ADMIN_PASSWORD: ${DASHBOARD_ADMIN_PASSWORD:-jarvis2024!}
+
+      # API URL (internal)
+      NEXT_PUBLIC_API_URL: http://api:3000
+    ports:
+      - "${DASHBOARD_PORT:-3001}:3001"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - jarvis-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   jarvis-network:
     driver: bridge
