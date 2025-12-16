@@ -1,132 +1,202 @@
-import { Container } from '@/components/ui/container';
-import { Button } from '@/components/ui/button';
+'use client';
+
 import Link from 'next/link';
-import { ArrowRight, Bot } from 'lucide-react';
+import { Container, Icon, Badge } from '@/components/ui';
+import { useScrollAnimation } from '@/hooks';
 
 const footerLinks = {
-  Product: [
+  product: [
     { label: 'Features', href: '#features' },
-    { label: 'Pricing', href: '#pricing' },
+    { label: 'How It Works', href: '#how-it-works' },
     { label: 'Integrations', href: '#integrations' },
-    { label: 'API Docs', href: '/docs' },
+    { label: 'Pricing', href: '#pricing' },
   ],
-  Company: [
-    { label: 'About', href: '/about' },
-    { label: 'Blog', href: '/blog' },
-    { label: 'Careers', href: '/careers' },
-    { label: 'Contact', href: '#contact' },
+  resources: [
+    { label: 'Documentation', href: '#' },
+    { label: 'API Reference', href: '#' },
+    { label: 'Status', href: '#' },
+    { label: 'Changelog', href: '#' },
   ],
-  Resources: [
-    { label: 'Documentation', href: '/docs' },
-    { label: 'Help Center', href: '/help' },
-    { label: 'Status', href: '/status' },
-    { label: 'Changelog', href: '/changelog' },
+  company: [
+    { label: 'About Us', href: '#' },
+    { label: 'Blog', href: '#' },
+    { label: 'Careers', href: '#' },
+    { label: 'Contact', href: '#' },
   ],
-  Legal: [
-    { label: 'Privacy', href: '/privacy' },
-    { label: 'Terms', href: '/terms' },
-    { label: 'Security', href: '/security' },
+  legal: [
+    { label: 'Privacy Policy', href: '#' },
+    { label: 'Terms of Service', href: '#' },
+    { label: 'Security', href: '#' },
   ],
 };
 
 export function Footer() {
+  const { ref, isVisible } = useScrollAnimation();
+
   return (
-    <footer className="bg-footer-gradient text-white">
-      {/* CTA Section */}
-      <div className="py-20 relative overflow-hidden">
-        <Container className="relative">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-              Realize Value from AI. Fast.
-              <span className="block text-blue-200">Get Started Today.</span>
-            </h2>
-            <p className="text-xl text-blue-100 mb-8">
-              Join thousands of teams already using JARVIS to supercharge their productivity.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/dashboard">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-              <Link href="#contact">
-                <Button variant="outline" size="lg">
-                  Contact Sales
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </Container>
-
-        {/* Background text */}
-        <div className="absolute bottom-0 left-0 right-0 overflow-hidden pointer-events-none">
-          <div className="text-[200px] font-bold text-white/5 whitespace-nowrap leading-none">
-            JARVIS
-          </div>
-        </div>
-      </div>
-
-      {/* Footer Links */}
-      <div className="border-t border-white/10 py-16">
+    <footer className="bg-neutral-900 text-white relative overflow-hidden">
+      {/* Top section with newsletter */}
+      <div className="border-b border-white/10">
         <Container>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
-            {/* Logo & Description */}
-            <div className="col-span-2 md:col-span-1">
-              <Link href="/" className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                  <Bot className="w-6 h-6" />
-                </div>
-                <span className="text-xl font-bold">J.A.R.V.I.S</span>
-              </Link>
-              <p className="text-blue-200 text-sm">
-                Your intelligent AI assistant for team collaboration.
+          <div
+            ref={ref}
+            className={`py-16 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 transition-all duration-700 ${
+              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            <div className="max-w-xl">
+              <h3 className="text-2xl md:text-3xl font-bold mb-2">
+                Stay Updated
+              </h3>
+              <p className="text-neutral-400">
+                Get the latest updates on new features and integrations.
               </p>
             </div>
 
-            {/* Link Columns */}
-            {Object.entries(footerLinks).map(([title, links]) => (
-              <div key={title}>
-                <h4 className="font-semibold mb-4">{title}</h4>
-                <ul className="space-y-3">
-                  {links.map((link) => (
-                    <li key={link.label}>
-                      <Link
-                        href={link.href}
-                        className="text-blue-200 hover:text-white text-sm transition-colors"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            {/* Newsletter form */}
+            <form className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="flex-1 lg:w-80 px-5 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-neutral-500 focus:outline-none focus:border-primary-500 transition-colors"
+              />
+              <button
+                type="submit"
+                className="px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold transition-colors flex items-center justify-center gap-2"
+              >
+                Subscribe
+                <Icon name="arrow-right" size="sm" />
+              </button>
+            </form>
           </div>
         </Container>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-white/10 py-6">
-        <Container>
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-blue-200 text-sm">
-              © {new Date().getFullYear()} J.A.R.V.I.S. All rights reserved.
+      {/* Main footer content */}
+      <Container>
+        <div className="py-16 grid md:grid-cols-2 lg:grid-cols-6 gap-12">
+          {/* Brand column */}
+          <div className="lg:col-span-2">
+            <Link href="/" className="flex items-center gap-3 mb-6 group">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                <Icon name="sparkles" size="md" className="text-white" />
+              </div>
+              <div>
+                <span className="text-2xl font-bold block">J.A.R.V.I.S</span>
+                <span className="text-xs text-neutral-500">AI Executive Assistant</span>
+              </div>
+            </Link>
+            <p className="text-neutral-400 mb-6 max-w-xs leading-relaxed">
+              AI-powered Vietnamese executive assistant with long-term memory for Telegram and Lark Suite.
             </p>
-            <div className="flex gap-6">
-              {['Telegram', 'Twitter', 'LinkedIn', 'GitHub'].map((social) => (
-                <a
-                  key={social}
-                  href="#"
-                  className="text-blue-200 hover:text-white text-sm transition-colors"
-                >
-                  {social}
-                </a>
-              ))}
+
+            {/* Social links */}
+            <div className="flex gap-3">
+              <a
+                href="https://t.me/jarvis_assistant_bot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-xl bg-white/10 hover:bg-sky-500/20 hover:text-sky-400 flex items-center justify-center transition-all"
+              >
+                <Icon name="telegram" size="sm" />
+              </a>
+              <a
+                href="#"
+                className="w-10 h-10 rounded-xl bg-white/10 hover:bg-blue-500/20 hover:text-blue-400 flex items-center justify-center transition-all"
+              >
+                <Icon name="lark" size="sm" />
+              </a>
+              <a
+                href="#"
+                className="w-10 h-10 rounded-xl bg-white/10 hover:bg-neutral-700 flex items-center justify-center transition-all"
+              >
+                <Icon name="github" size="sm" />
+              </a>
             </div>
           </div>
-        </Container>
-      </div>
+
+          {/* Links columns */}
+          <div>
+            <h4 className="font-semibold text-white mb-5">Product</h4>
+            <ul className="space-y-3">
+              {footerLinks.product.map((link) => (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    className="text-neutral-400 hover:text-white transition-colors text-sm"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-white mb-5">Resources</h4>
+            <ul className="space-y-3">
+              {footerLinks.resources.map((link) => (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    className="text-neutral-400 hover:text-white transition-colors text-sm"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-white mb-5">Company</h4>
+            <ul className="space-y-3">
+              {footerLinks.company.map((link) => (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    className="text-neutral-400 hover:text-white transition-colors text-sm"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-white mb-5">Legal</h4>
+            <ul className="space-y-3">
+              {footerLinks.legal.map((link) => (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    className="text-neutral-400 hover:text-white transition-colors text-sm"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div className="py-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-neutral-500">
+            © {new Date().getFullYear()} J.A.R.V.I.S. All rights reserved.
+          </p>
+
+          <div className="flex items-center gap-6">
+            <Badge variant="default" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+              All Systems Operational
+            </Badge>
+            <p className="text-sm text-neutral-500">
+              Made with <span className="text-red-500">❤</span> in Vietnam
+            </p>
+          </div>
+        </div>
+      </Container>
     </footer>
   );
 }

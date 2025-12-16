@@ -1,121 +1,140 @@
-import { Container } from '@/components/ui/container';
-import { Card, CardContent } from '@/components/ui/card';
-import { PlaceholderImage } from '@/components/ui/placeholder-image';
-import { Brain, Database, MessageSquare, Shield } from 'lucide-react';
+'use client';
 
-const features = [
+import { Container, Badge, Icon } from '@/components/ui';
+import type { IconName } from '@/components/ui';
+import { useScrollAnimation, useStaggerAnimation } from '@/hooks';
+
+const features: Array<{
+  icon: IconName;
+  title: string;
+  description: string;
+  badge?: string;
+  color: string;
+}> = [
   {
-    icon: Brain,
-    title: 'Advanced Memory',
-    description: 'Remembers context from all conversations using mem0 for personalized, intelligent responses.',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
+    icon: 'memory',
+    title: 'Long-term Memory',
+    description:
+      'Remembers conversations, decisions, and context across sessions. Never lose important information again.',
+    badge: 'mem0',
+    color: 'from-violet-500 to-purple-600',
   },
   {
-    icon: Database,
-    title: 'Unified Data Access',
-    description: 'Seamlessly connects to your team\'s knowledge base and business systems.',
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
+    icon: 'sparkles',
+    title: 'Auto Task Extraction',
+    description:
+      'Automatically identifies tasks, deadlines, and assignees from natural conversations.',
+    color: 'from-amber-500 to-orange-600',
   },
   {
-    icon: MessageSquare,
-    title: 'Multi-Platform',
-    description: 'Works natively with Telegram and Lark Suite group chats for team collaboration.',
-    color: 'text-lime-600',
-    bgColor: 'bg-lime-50',
+    icon: 'search',
+    title: 'Semantic Search',
+    description:
+      'Find any past conversation using natural language. Powered by vector embeddings.',
+    badge: 'pgvector',
+    color: 'from-cyan-500 to-blue-600',
   },
   {
-    icon: Shield,
+    icon: 'globe',
+    title: 'Vietnamese-First',
+    description:
+      'Optimized for Vietnamese with cultural nuances and date normalization (ngày mai, hôm qua...).',
+    color: 'from-emerald-500 to-teal-600',
+  },
+  {
+    icon: 'lightning',
+    title: 'Instant Response',
+    description:
+      'Sub-3 second response with Gemini Flash. GPT-4 fallback ensures 99.9% uptime.',
+    badge: 'Fast',
+    color: 'from-rose-500 to-pink-600',
+  },
+  {
+    icon: 'shield',
     title: 'Enterprise Security',
-    description: 'Your data stays private with enterprise-grade encryption and access controls.',
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50',
+    description:
+      'End-to-end encryption, no data sharing. Self-hosted option available.',
+    color: 'from-slate-600 to-zinc-700',
   },
 ];
 
 export function FeaturesSection() {
+  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation();
+  const { getDelay } = useStaggerAnimation(features.length, 80);
+
   return (
-    <section id="features" className="py-24 bg-white">
-      <Container>
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            One Unified Platform
-            <span className="block text-gradient">for Generative AI</span>
+    <section id="features" className="py-28 bg-white relative overflow-hidden">
+      {/* Background geometric shapes */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-primary-100 to-primary-50 rounded-full blur-3xl opacity-60" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-accent-100 to-accent-50 rounded-full blur-3xl opacity-60" />
+      </div>
+
+      <Container className="relative z-10">
+        <div
+          ref={sectionRef}
+          className={`text-center max-w-3xl mx-auto mb-20 transition-all duration-700 ${
+            sectionVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
+          <Badge variant="primary" className="mb-6 text-sm font-semibold tracking-wide">
+            AI CAPABILITIES
+          </Badge>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-tight">
+            Intelligent Features for
+            <span className="block text-gradient mt-2">Modern Teams</span>
           </h2>
-          <p className="text-lg text-gray-600">
-            Everything you need to supercharge your team's productivity with AI-powered assistance.
+          <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
+            Built with cutting-edge AI technology to help your team work smarter.
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature) => (
-            <Card key={feature.title} hover className="p-0">
-              <CardContent className="p-6">
-                <div className={`w-14 h-14 ${feature.bgColor} rounded-xl flex items-center justify-center mb-4`}>
-                  <feature.icon className={`w-7 h-7 ${feature.color}`} />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {features.map((feature, index) => (
+            <div
+              key={feature.title}
+              style={{ transitionDelay: sectionVisible ? getDelay(index) : '0ms' }}
+              className={`group relative bg-neutral-50 rounded-2xl p-8 border border-neutral-200/80
+                transition-all duration-500 hover:bg-white hover:shadow-xl hover:shadow-neutral-200/50 hover:-translate-y-1 hover:border-neutral-300
+                ${sectionVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                ${index === 0 ? 'lg:col-span-2 lg:row-span-1' : ''}
+              `}
+            >
+              {/* Icon with gradient background */}
+              <div
+                className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color}
+                  flex items-center justify-center mb-6 shadow-lg group-hover:scale-110
+                  transition-transform duration-300`}
+              >
+                <Icon name={feature.icon} size="md" className="text-white" />
+              </div>
+
+              {/* Content */}
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <h3 className="text-xl font-bold text-neutral-900 group-hover:text-primary-700 transition-colors">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  {feature.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                {feature.badge && (
+                  <span className="shrink-0 px-2.5 py-1 text-xs font-semibold bg-neutral-900 text-white rounded-full">
+                    {feature.badge}
+                  </span>
+                )}
+              </div>
 
-        {/* Feature Showcase */}
-        <div className="mt-24 grid lg:grid-cols-2 gap-16 items-center">
-          <div className="order-2 lg:order-1">
-            <PlaceholderImage
-              variant="gradient"
-              height={400}
-              label="Feature Showcase"
-              className="w-full"
-            />
-          </div>
-          <div className="order-1 lg:order-2">
-            <h3 className="text-3xl font-bold text-gray-900 mb-6">
-              Unlocking AI for
-              <span className="block text-blue-600">Your Work</span>
-            </h3>
-            <div className="space-y-6">
-              <FeatureItem
-                title="Easy Operator"
-                description="Simple commands and natural language make JARVIS easy to use for everyone."
-              />
-              <FeatureItem
-                title="Accurate Results"
-                description="Powered by Gemini Flash with intelligent fallback to ensure reliable responses."
-              />
-              <FeatureItem
-                title="Get Reports"
-                description="Generate comprehensive reports and summaries from your conversations instantly."
+              <p className="text-neutral-600 leading-relaxed">
+                {feature.description}
+              </p>
+
+              {/* Hover accent line */}
+              <div
+                className={`absolute bottom-0 left-0 h-1 bg-gradient-to-r ${feature.color} rounded-b-2xl
+                  transition-all duration-300 w-0 group-hover:w-full`}
               />
             </div>
-          </div>
+          ))}
         </div>
       </Container>
     </section>
-  );
-}
-
-function FeatureItem({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="flex gap-4">
-      <div className="flex-shrink-0 w-6 h-6 bg-lime-500 rounded-full flex items-center justify-center mt-1">
-        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-        </svg>
-      </div>
-      <div>
-        <h4 className="font-semibold text-gray-900 mb-1">{title}</h4>
-        <p className="text-gray-600 text-sm">{description}</p>
-      </div>
-    </div>
   );
 }

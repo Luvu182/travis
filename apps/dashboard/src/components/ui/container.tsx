@@ -1,27 +1,29 @@
-import { cn } from '@/lib/utils';
-import type { HTMLAttributes } from 'react';
+import { type HTMLAttributes, type ReactNode } from 'react';
+
+type ContainerSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
 interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  size?: ContainerSize;
+  children: ReactNode;
 }
 
+const sizeStyles: Record<ContainerSize, string> = {
+  sm: 'max-w-3xl',
+  md: 'max-w-5xl',
+  lg: 'max-w-6xl',
+  xl: 'max-w-7xl',
+  full: 'max-w-full',
+};
+
 export function Container({
-  className,
-  size = 'lg',
+  size = 'xl',
+  className = '',
   children,
   ...props
 }: ContainerProps) {
   return (
     <div
-      className={cn(
-        'mx-auto w-full px-4 sm:px-6 lg:px-8',
-        size === 'sm' && 'max-w-3xl',
-        size === 'md' && 'max-w-5xl',
-        size === 'lg' && 'max-w-7xl',
-        size === 'xl' && 'max-w-[1400px]',
-        size === 'full' && 'max-w-full',
-        className
-      )}
+      className={`mx-auto px-4 sm:px-6 lg:px-8 w-full ${sizeStyles[size]} ${className}`}
       {...props}
     >
       {children}

@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@jarvis/config'],
   serverExternalPackages: ['bcrypt', 'pg'],
+  allowedDevOrigins: ['https://jarvis.9solution.vn'],
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',

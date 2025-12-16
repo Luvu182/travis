@@ -2,6 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Settings, Trash2, Bot, User, Plus, MessageSquare, ChevronLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { TypingIndicator } from '@/components/ui/typing-indicator';
 
 interface Message {
   id: string;
@@ -221,25 +225,25 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-[calc(100vh-4rem)] bg-neutral-50 dark:bg-neutral-950">
       {/* Sidebar - Conversations List */}
       {showSidebar && (
-        <div className="w-64 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-900">
-          <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-            <button
+        <div className="w-64 border-r border-neutral-200 dark:border-neutral-800 flex flex-col bg-white dark:bg-neutral-900">
+          <div className="p-3 border-b border-neutral-200 dark:border-neutral-800">
+            <Button
               onClick={startNewChat}
-              className="w-full flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white"
             >
-              <Plus className="w-4 h-4" />
-              <span>Cuộc trò chuyện mới</span>
-            </button>
+              <Plus className="w-4 h-4 mr-2" />
+              Cuộc trò chuyện mới
+            </Button>
           </div>
 
           <div className="flex-1 overflow-y-auto">
             {loadingConversations ? (
-              <div className="p-4 text-center text-gray-500">Đang tải...</div>
+              <div className="p-4 text-center text-neutral-500 dark:text-neutral-400">Đang tải...</div>
             ) : conversations.length === 0 ? (
-              <div className="p-4 text-center text-gray-500 text-sm">
+              <div className="p-4 text-center text-neutral-500 dark:text-neutral-400 text-sm">
                 Chưa có cuộc trò chuyện nào
               </div>
             ) : (
@@ -248,20 +252,20 @@ export default function ChatPage() {
                   <div
                     key={conv.id}
                     onClick={() => selectConversation(conv.id)}
-                    className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                    className={`group flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 ${
                       currentConversationId === conv.id
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                        : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
                     }`}
                   >
-                    <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                    <MessageSquare className="w-4 h-4 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm truncate">{conv.title}</p>
-                      <p className="text-xs text-gray-500">{formatDate(conv.updatedAt)}</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{formatDate(conv.updatedAt)}</p>
                     </div>
                     <button
                       onClick={(e) => deleteConversation(conv.id, e)}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-opacity"
+                      className="opacity-0 group-hover:opacity-100 p-1 text-neutral-400 hover:text-red-500 transition-opacity"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -276,22 +280,27 @@ export default function ChatPage() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="p-2 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
               <ChevronLeft className={`w-5 h-5 transition-transform ${showSidebar ? '' : 'rotate-180'}`} />
             </button>
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Chat với Jarvis
-            </h1>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
+                <Bot className="w-4 h-4 text-white" />
+              </div>
+              <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
+                Chat với Jarvis
+              </h1>
+            </div>
           </div>
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 ${
-              showSettings ? 'text-blue-500' : 'text-gray-500'
+            className={`p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors ${
+              showSettings ? 'text-primary-500' : 'text-neutral-500'
             }`}
             title="Cài đặt"
           >
@@ -301,10 +310,10 @@ export default function ChatPage() {
 
         {/* Settings Panel */}
         {showSettings && (
-          <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+          <div className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800">
             <div className="flex flex-wrap gap-6">
               <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-600 dark:text-gray-400">
+                <label className="text-sm text-neutral-600 dark:text-neutral-400">
                   Số tin nhắn context:
                 </label>
                 <select
@@ -314,7 +323,7 @@ export default function ChatPage() {
                     setSettings(newSettings);
                     localStorage.setItem('chat-settings', JSON.stringify(newSettings));
                   }}
-                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-3 py-1.5 text-sm border border-neutral-200 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
                 >
                   {[5, 10, 15, 20, 30, 50].map(n => (
                     <option key={n} value={n}>{n}</option>
@@ -322,7 +331,7 @@ export default function ChatPage() {
                 </select>
               </div>
               <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-600 dark:text-gray-400">
+                <label className="text-sm text-neutral-600 dark:text-neutral-400">
                   Sử dụng Memory:
                 </label>
                 <input
@@ -333,7 +342,7 @@ export default function ChatPage() {
                     setSettings(newSettings);
                     localStorage.setItem('chat-settings', JSON.stringify(newSettings));
                   }}
-                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
+                  className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500"
                 />
               </div>
             </div>
@@ -343,10 +352,12 @@ export default function ChatPage() {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
-              <Bot className="w-16 h-16 mb-4 opacity-50" />
-              <p className="text-lg">Xin chào! Tôi là Jarvis.</p>
-              <p className="text-sm">Hãy gửi tin nhắn để bắt đầu trò chuyện.</p>
+            <div className="flex flex-col items-center justify-center h-full text-neutral-500 dark:text-neutral-400">
+              <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary-500/25">
+                <Bot className="w-10 h-10 text-white" />
+              </div>
+              <p className="text-lg font-medium text-neutral-700 dark:text-neutral-300">Xin chào! Tôi là Jarvis.</p>
+              <p className="text-sm mt-2">Hãy gửi tin nhắn để bắt đầu trò chuyện.</p>
             </div>
           ) : (
             messages.map((message) => (
@@ -355,27 +366,27 @@ export default function ChatPage() {
                 className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {message.role === 'assistant' && (
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-white" />
+                  <div className="shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-md">
+                    <Bot className="w-4 h-4 text-white" />
                   </div>
                 )}
-                <div
-                  className={`max-w-[70%] px-4 py-2 rounded-2xl ${
+                <Card
+                  className={`max-w-[70%] px-4 py-3 ${
                     message.role === 'user'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                      ? 'bg-primary-600 text-white border-transparent'
+                      : 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 border-neutral-200 dark:border-neutral-700'
                   }`}
                 >
                   <p className="whitespace-pre-wrap">{message.content}</p>
-                  <p className={`text-xs mt-1 ${
-                    message.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
+                  <p className={`text-xs mt-2 ${
+                    message.role === 'user' ? 'text-primary-200' : 'text-neutral-500 dark:text-neutral-400'
                   }`}>
                     {formatTime(message.createdAt)}
                   </p>
-                </div>
+                </Card>
                 {message.role === 'user' && (
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                    <User className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                  <div className="shrink-0 w-8 h-8 rounded-lg bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
+                    <User className="w-4 h-4 text-neutral-600 dark:text-neutral-300" />
                   </div>
                 )}
               </div>
@@ -383,41 +394,37 @@ export default function ChatPage() {
           )}
           {isLoading && (
             <div className="flex gap-3 justify-start">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
+              <div className="shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-md">
+                <Bot className="w-4 h-4 text-white" />
               </div>
-              <div className="px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              </div>
+              <Card className="px-4 py-3 bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
+                <TypingIndicator />
+              </Card>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
           <div className="flex gap-3 items-end">
-            <textarea
+            <Textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
+              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => handleKeyDown(e)}
               placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter để xuống dòng)"
               rows={1}
-              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500"
+              className="flex-1 resize-none"
               style={{ maxHeight: '120px' }}
             />
-            <button
+            <Button
               onClick={sendMessage}
               disabled={!input.trim() || isLoading}
-              className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-3 bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50"
             >
               <Send className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>

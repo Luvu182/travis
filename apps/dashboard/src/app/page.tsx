@@ -2,23 +2,27 @@ import {
   Header,
   HeroSection,
   FeaturesSection,
-  StatsSection,
-  AICapabilitiesSection,
+  HowItWorksSection,
+  IntegrationsSection,
   TestimonialsSection,
-  ContactSection,
+  StatsSection,
+  FAQSection,
+  CTASection,
   Footer,
 } from '@/components/landing';
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-white">
       <Header />
       <HeroSection />
       <FeaturesSection />
       <StatsSection />
-      <AICapabilitiesSection />
+      <HowItWorksSection />
+      <IntegrationsSection />
       <TestimonialsSection />
-      <ContactSection />
+      <FAQSection />
+      <CTASection />
       <Footer />
     </main>
   );

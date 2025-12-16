@@ -1,88 +1,153 @@
-import { Container } from '@/components/ui/container';
-import { Card, CardContent } from '@/components/ui/card';
-import { Star } from 'lucide-react';
+'use client';
+
+import { Container, Badge, Icon } from '@/components/ui';
+import { useScrollAnimation, useStaggerAnimation } from '@/hooks';
 
 const testimonials = [
   {
-    name: 'Nguyễn Minh Anh',
-    role: 'Product Manager',
-    company: 'TechViet',
-    content: 'JARVIS đã giúp team chúng tôi tiết kiệm hàng giờ mỗi ngày. Khả năng nhớ ngữ cảnh cực kỳ ấn tượng!',
-    avatar: 'MA',
+    quote:
+      'J.A.R.V.I.S completely changed how our team handles follow-ups. No more forgotten tasks or lost decisions.',
+    author: 'Minh Tran',
+    role: 'CEO, TechStartup VN',
+    avatar: 'MT',
+    rating: 5,
   },
   {
-    name: 'David Chen',
-    role: 'Engineering Lead',
-    company: 'StartupX',
-    content: 'The best AI assistant we\'ve used. It integrates perfectly with our Telegram workflow.',
-    avatar: 'DC',
+    quote:
+      'The Vietnamese language support is incredible. It understands our local context and date formats perfectly.',
+    author: 'Linh Nguyen',
+    role: 'Product Manager, FinTech Corp',
+    avatar: 'LN',
+    rating: 5,
   },
   {
-    name: 'Trần Hương Giang',
-    role: 'Operations Director',
-    company: 'FinanceHub',
-    content: 'Tính năng memory của JARVIS thật sự khác biệt. Nó nhớ mọi thứ và đưa ra gợi ý chính xác.',
-    avatar: 'TG',
+    quote:
+      'We reduced meeting follow-up time by 80%. J.A.R.V.I.S extracts action items automatically from our chats.',
+    author: 'Duc Pham',
+    role: 'Operations Lead, E-commerce Co',
+    avatar: 'DP',
+    rating: 5,
+  },
+  {
+    quote:
+      'Finally, an AI assistant that actually remembers our past conversations. Game changer for project management.',
+    author: 'Hoa Le',
+    role: 'Project Manager, Agency X',
+    avatar: 'HL',
+    rating: 5,
+  },
+  {
+    quote:
+      'Setup took 2 minutes and the ROI was immediate. Our team is 3x more productive with task tracking.',
+    author: 'Tuan Vo',
+    role: 'Team Lead, SaaS Startup',
+    avatar: 'TV',
+    rating: 5,
+  },
+  {
+    quote:
+      'The semantic search is magic. I can find any past decision or conversation in seconds.',
+    author: 'Mai Hoang',
+    role: 'CTO, DevOps Team',
+    avatar: 'MH',
+    rating: 5,
   },
 ];
 
 export function TestimonialsSection() {
+  const { ref, isVisible } = useScrollAnimation();
+  const { getDelay } = useStaggerAnimation(testimonials.length, 100);
+
   return (
-    <section className="py-24 bg-gray-50">
-      <Container>
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Over 18k+ Customers
-            <span className="block text-gradient">Used JARVIS</span>
+    <section className="py-28 bg-white relative overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-neutral-50/50 to-white pointer-events-none" />
+
+      <Container className="relative z-10">
+        <div
+          ref={ref}
+          className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-700 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
+          <Badge variant="success" className="mb-6 text-sm font-semibold">
+            TESTIMONIALS
+          </Badge>
+          <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-6">
+            Loved by Teams{' '}
+            <span className="text-gradient">Everywhere</span>
           </h2>
-          <p className="text-lg text-gray-600">
-            See what our users say about their experience with JARVIS.
+          <p className="text-xl text-neutral-600">
+            See what our users say about their experience with J.A.R.V.I.S
           </p>
         </div>
 
         {/* Testimonials Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial) => (
-            <Card key={testimonial.name} hover className="p-0">
-              <CardContent className="p-6">
-                {/* Stars */}
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {testimonials.map((testimonial, index) => (
+            <div
+              key={testimonial.author}
+              style={{ transitionDelay: isVisible ? getDelay(index) : '0ms' }}
+              className={`group relative bg-neutral-50 rounded-2xl p-8 border border-neutral-200
+                hover:bg-white hover:shadow-xl hover:shadow-neutral-200/50 hover:border-neutral-300
+                transition-all duration-500 ${
+                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                }`}
+            >
+              {/* Quote icon */}
+              <div className="absolute -top-3 right-8 w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+                <span className="text-primary-600 text-2xl font-serif leading-none">"</span>
+              </div>
 
-                {/* Content */}
-                <p className="text-gray-700 mb-6 leading-relaxed">
-                  "{testimonial.content}"
-                </p>
+              {/* Rating */}
+              <div className="flex gap-1 mb-4">
+                {[...Array(testimonial.rating)].map((_, i) => (
+                  <Icon key={i} name="star" size="xs" className="text-amber-400 fill-amber-400" />
+                ))}
+              </div>
 
-                {/* Author */}
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                    {testimonial.avatar}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {testimonial.role} at {testimonial.company}
-                    </div>
-                  </div>
+              {/* Quote */}
+              <p className="text-neutral-700 mb-6 leading-relaxed">
+                "{testimonial.quote}"
+              </p>
+
+              {/* Author */}
+              <div className="flex items-center gap-4 pt-4 border-t border-neutral-200">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-semibold">
+                  {testimonial.avatar}
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <p className="font-semibold text-neutral-900">{testimonial.author}</p>
+                  <p className="text-sm text-neutral-500">{testimonial.role}</p>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Customer Logos */}
-        <div className="mt-16 pt-16 border-t border-gray-200">
-          <p className="text-center text-gray-500 mb-8">Trusted by leading companies</p>
-          <div className="flex flex-wrap justify-center items-center gap-12">
-            {['TechCorp', 'StartupX', 'FinanceHub', 'MediaPro', 'CloudNet'].map((company) => (
-              <div key={company} className="text-2xl font-bold text-gray-300 hover:text-gray-400 transition-colors">
-                {company}
-              </div>
-            ))}
+        {/* Social proof stats */}
+        <div
+          className={`mt-16 pt-12 border-t border-neutral-200 transition-all duration-700 delay-500 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
+          <div className="flex flex-wrap justify-center gap-12 text-center">
+            <div>
+              <p className="text-4xl font-bold text-neutral-900 mb-1">500+</p>
+              <p className="text-sm text-neutral-500">Active Teams</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold text-neutral-900 mb-1">50K+</p>
+              <p className="text-sm text-neutral-500">Tasks Extracted</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold text-neutral-900 mb-1">1M+</p>
+              <p className="text-sm text-neutral-500">Messages Processed</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold text-neutral-900 mb-1">4.9/5</p>
+              <p className="text-sm text-neutral-500">Average Rating</p>
+            </div>
           </div>
         </div>
       </Container>

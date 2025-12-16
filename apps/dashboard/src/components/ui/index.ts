@@ -1,5 +1,14 @@
-export { Button, type ButtonProps } from './button';
-export { Container } from './container';
+export { Button } from './button';
+export { Card, CardContent, CardHeader, CardFooter } from './card';
+export { Input } from './input';
+export { Textarea } from './textarea';
 export { Badge } from './badge';
-export { Card, CardHeader, CardContent, CardFooter } from './card';
-export { PlaceholderImage } from './placeholder-image';
+export { Container } from './container';
+export { Avatar } from './avatar';
+export { Icon, type IconName } from './icon';
+export { ChatBubble } from './chat-bubble';
+export { StreamingText } from './streaming-text';
+export { TypingIndicator } from './typing-indicator';
+export { FeatureCard } from './feature-card';
+export { StatCard } from './stat-card';
+export { IntegrationLogo } from './integration-logo';
