@@ -1,5 +1,5 @@
 {
-  "name": "@luxbot/core",
+  "name": "@travis/core",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -16,8 +16,8 @@
     "@ai-sdk/google": "^2.0.0",
     "@ai-sdk/openai": "^1.0.0",
     "zod": "^3.23.0",
-    "@luxbot/db": "workspace:*",
-    "@luxbot/config": "workspace:*"
+    "@travis/db": "workspace:*",
+    "@travis/config": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.6.0"

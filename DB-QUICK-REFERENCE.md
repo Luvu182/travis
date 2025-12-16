@@ -8,7 +8,7 @@
 
 ```typescript
 // packages/db/src/client.ts
-import { db } from '@luxbot/db';
+import { db } from '@travis/db';
 
 // Connection is lazy-loaded on first use
 // Automatically pools connections (dev: 1, prod: 20)
@@ -20,7 +20,7 @@ import { db } from '@luxbot/db';
 
 ### Group Management
 ```typescript
-import { upsertGroup, getGroupStats } from '@luxbot/db';
+import { upsertGroup, getGroupStats } from '@travis/db';
 
 // Create or update group
 const group = await upsertGroup({
@@ -36,7 +36,7 @@ const stats = await getGroupStats(groupId);
 
 ### User Management
 ```typescript
-import { upsertUser } from '@luxbot/db';
+import { upsertUser } from '@travis/db';
 
 // Create or update user
 const user = await upsertUser({
@@ -49,7 +49,7 @@ const user = await upsertUser({
 
 ### Message Operations
 ```typescript
-import { saveMessage, getRecentMessages } from '@luxbot/db';
+import { saveMessage, getRecentMessages } from '@travis/db';
 
 // Save a message
 const message = await saveMessage({
@@ -68,7 +68,7 @@ const messages = await getRecentMessages(groupId, limit = 5);
 
 ### Extracted Information
 ```typescript
-import { saveExtractedInfo, getExtractedInfoByGroup } from '@luxbot/db';
+import { saveExtractedInfo, getExtractedInfoByGroup } from '@travis/db';
 
 // Save extracted task/decision/deadline
 const info = await saveExtractedInfo({
@@ -93,7 +93,7 @@ const tasks = await getExtractedInfoByGroup(groupId, {
 
 ### Memory Operations
 ```typescript
-import { saveMemory, getRecentMemories } from '@luxbot/db';
+import { saveMemory, getRecentMemories } from '@travis/db';
 
 // Save memory
 const memory = await saveMemory({
@@ -111,7 +111,7 @@ const memories = await getRecentMemories(groupId, limit = 10);
 
 ### Vector Search
 ```typescript
-import { searchByVector, searchMemories } from '@luxbot/db';
+import { searchByVector, searchMemories } from '@travis/db';
 
 // Search extracted info by vector similarity
 const results = await searchByVector([0.1, 0.2, ..., 1536 dims], {
@@ -143,7 +143,7 @@ import type {
   ExtractedInfo, NewExtractedInfo,
   Memory, NewMemory,
   QueryLog, NewQueryLog,
-} from '@luxbot/db';
+} from '@travis/db';
 ```
 
 ---

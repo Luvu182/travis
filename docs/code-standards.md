@@ -166,7 +166,7 @@ import { sql } from 'drizzle-orm';
 import postgres from 'postgres';
 
 // Internal packages
-import { env } from '@luxbot/config';
+import { env } from '@travis/config';
 import * as schema from './schema.js';
 
 // Local imports
@@ -519,12 +519,12 @@ export const env = envSchema.parse(process.env);
 // packages/db/package.json
 {
   "dependencies": {
-    "@luxbot/config": "workspace:*"
+    "@travis/config": "workspace:*"
   }
 }
 ```
 
-**Import path:** `@luxbot/config`
+**Import path:** `@travis/config`
 
 ### External Dependencies
 - Keep versions in sync across monorepo

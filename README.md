@@ -1,4 +1,4 @@
-# LuxBot - Vietnamese Executive Assistant with Long-Term Memory
+# Travis - Vietnamese Executive Assistant with Long-Term Memory
 
 AI-powered chatbot with long-term memory using mem0, designed for Telegram and Lark Suite group chats.
 
@@ -25,7 +25,7 @@ AI-powered chatbot with long-term memory using mem0, designed for Telegram and L
 ## Project Structure
 
 ```
-LuxBot/
+Travis/
 ├── apps/
 │   └── api/              # Hono API server
 ├── packages/

@@ -1,5 +1,5 @@
 import { ErrorHandler } from 'hono';
-import { env } from '@luxbot/config';
+import { env } from '@travis/config';
 
 export const errorHandler: ErrorHandler = (err, c) => {
   console.error('Unhandled error:', err);

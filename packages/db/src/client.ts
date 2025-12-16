@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { env } from '@luxbot/config';
+import { env } from '@travis/config';
 import * as schema from './schema.js';
 import { sql } from 'drizzle-orm';
 

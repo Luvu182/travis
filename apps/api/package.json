@@ -1,5 +1,5 @@
 {
-  "name": "@luxbot/api",
+  "name": "@travis/api",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -11,9 +11,9 @@
   "dependencies": {
     "@hono/node-server": "^1.13.0",
     "@larksuiteoapi/node-sdk": "^1.28.0",
-    "@luxbot/config": "workspace:*",
-    "@luxbot/core": "workspace:*",
-    "@luxbot/db": "workspace:*",
+    "@travis/config": "workspace:*",
+    "@travis/core": "workspace:*",
+    "@travis/db": "workspace:*",
     "dotenv": "^16.4.0",
     "drizzle-orm": "^0.36.0",
     "grammy": "^1.21.0",

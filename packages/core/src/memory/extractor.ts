@@ -1,7 +1,7 @@
 import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import { z } from 'zod';
-import { env } from '@luxbot/config';
+import { env } from '@travis/config';
 
 // Schema for extracted info
 export const extractedInfoSchema = z.object({

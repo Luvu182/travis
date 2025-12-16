@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { db } from '@luxbot/db';
+import { db } from '@travis/db';
 import { sql } from 'drizzle-orm';
 
 export const healthRoutes = new Hono();

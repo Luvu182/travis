@@ -6,7 +6,7 @@
 
 ## Overview
 
-Complete API reference for memory layer components (`@luxbot/core/memory`). Handles embeddings generation, information extraction, storage, and semantic retrieval with Vietnamese language optimization.
+Complete API reference for memory layer components (`@travis/core/memory`). Handles embeddings generation, information extraction, storage, and semantic retrieval with Vietnamese language optimization.
 
 ## Embeddings Module
 
@@ -31,7 +31,7 @@ function embedText(text: string): Promise<number[]>
 
 **Usage:**
 ```typescript
-import { embedText } from '@luxbot/core';
+import { embedText } from '@travis/core';
 
 const embedding = await embedText('Important deadline for Q1 planning');
 console.log(embedding.length); // 768
@@ -170,7 +170,7 @@ function extractInfo(
 
 **Usage:**
 ```typescript
-import { extractInfo } from '@luxbot/core';
+import { extractInfo } from '@travis/core';
 
 const items = await extractInfo(
   'Bạn nào hoàn thành file report đến ngày 25/12?',
@@ -324,7 +324,7 @@ function storeExtractedInfo(params: {
 
 **Usage:**
 ```typescript
-import { storeExtractedInfo, extractInfo } from '@luxbot/core';
+import { storeExtractedInfo, extractInfo } from '@travis/core';
 
 const items = await extractInfo(message, context);
 
@@ -374,7 +374,7 @@ function storeMemory(params: {
 
 **Usage:**
 ```typescript
-import { storeMemory } from '@luxbot/core';
+import { storeMemory } from '@travis/core';
 
 await storeMemory({
   groupId: 'group-uuid',
@@ -486,7 +486,7 @@ function searchExtractedInfo(
 
 **Usage:**
 ```typescript
-import { searchExtractedInfo } from '@luxbot/core';
+import { searchExtractedInfo } from '@travis/core';
 
 const results = await searchExtractedInfo(
   'khi nào deadline sản phẩm V2?',
@@ -797,7 +797,7 @@ import {
   storeExtractedInfo,
   searchMemory,
   embedText
-} from '@luxbot/core';
+} from '@travis/core';
 
 async function processMessage(
   message: string,

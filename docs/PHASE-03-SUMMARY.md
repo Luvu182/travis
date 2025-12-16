@@ -297,7 +297,7 @@ const combined = await multiSearch([
 - `@ai-sdk/google` - Google AI SDK
 - `ai` - Vercel AI SDK
 - `zod` - Schema validation
-- `@luxbot/db` - Database operations
+- `@travis/db` - Database operations
 
 ### Model Requirements
 - Gemini API key (GEMINI_API_KEY)
