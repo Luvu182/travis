@@ -2,38 +2,87 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Role & Responsibilities
+## Project Overview
 
-Your role is to analyze user requirements, delegate tasks to appropriate sub-agents, and ensure cohesive delivery of features that meet specifications and architectural standards.
+J.A.R.V.I.S is a Vietnamese Executive Assistant chatbot with long-term memory using mem0, supporting Telegram and Lark Suite group chats.
+
+**Tech Stack:** Hono (TypeScript), PostgreSQL + pgvector, Drizzle ORM, mem0, Gemini Flash (primary) + OpenAI (fallback), grammY (Telegram), Turborepo + pnpm workspaces, Next.js 16 (dashboard)
+
+## Commands
+
+```bash
+# Development
+pnpm install           # Install all dependencies
+pnpm dev               # Start all services (turbo)
+pnpm build             # Build all packages
+pnpm typecheck         # Type check all packages
+pnpm lint              # Lint all packages
+
+# Database
+pnpm db:generate       # Generate Drizzle migrations
+pnpm db:migrate        # Run migrations
+pnpm db:push           # Push schema to DB (dev)
+pnpm db:studio         # Open Drizzle Studio
+
+# Docker
+docker compose up -d   # Start all services (postgres, api, memory, dashboard)
+
+# Single package commands
+pnpm --filter @jarvis/api dev       # Run API only
+pnpm --filter @jarvis/dashboard dev # Run dashboard only
+pnpm --filter @jarvis/core test     # Run core tests
+```
+
+## Architecture
+
+```
+jarvis/
+├── apps/
+│   ├── api/              # Hono API server (port 3000)
+│   │   ├── routes/       # API endpoints (health, chat, extract, search, query, metrics, auth, dashboard-metrics)
+│   │   ├── webhooks/     # Telegram & Lark webhook handlers
+│   │   ├── middleware/   # Rate limiting, error handling, dashboard auth
+│   │   └── services/     # Query handler, message processor
+│   ├── dashboard/        # Next.js 16 admin dashboard (port 3001)
+│   │   └── app/          # App Router with NextAuth v5
+│   └── memory-service/   # Python FastAPI mem0 service (port 8000)
+├── packages/
+│   ├── config/           # Zod-validated env config (@jarvis/config)
+│   ├── db/               # Drizzle ORM schema & client (@jarvis/db)
+│   │   ├── schema.ts     # All table definitions
+│   │   ├── client.ts     # Database connection
+│   │   └── operations.ts # CRUD operations
+│   └── core/             # AI & memory logic (@jarvis/core)
+│       ├── llm/          # Gemini/OpenAI providers with fallback
+│       └── memory/       # mem0 client, retriever, storage
+└── docker/               # PostgreSQL + pgvector setup
+```
+
+**Data Flow:** Webhook → API → Message Processor → LLM (with memory context from mem0) → Response
+
+**Key Tables:** `groups`, `users`, `messages`, `query_logs`, `adminUsers` (auth), `webConversations`, `webMessages`, `metricsHistory`
 
 ## Workflows
 
-- Primary workflow: `./.claude/workflows/primary-workflow.md`
-- Development rules: `./.claude/workflows/development-rules.md`
-- Orchestration protocols: `./.claude/workflows/orchestration-protocol.md`
-- Documentation management: `./.claude/workflows/documentation-management.md`
-- And other workflows: `./.claude/workflows/*`
+Read these before implementation:
+- Development rules: `.claude/workflows/development-rules.md`
+- Primary workflow: `.claude/workflows/primary-workflow.md`
+- Documentation management: `.claude/workflows/documentation-management.md`
+- Other workflows: `.claude/workflows/*`
 
-**IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
-**IMPORTANT:** You must follow strictly the development rules in `./.claude/workflows/development-rules.md` file.
-**IMPORTANT:** Before you plan or proceed any implementation, always read the `./README.md` file first to get context.
-**IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
-**IMPORTANT:** In reports, list any unresolved questions at the end, if any.
-**IMPORTANT**: Date format is configured in `.ck.json` and injected by session hooks via `$CK_PLAN_DATE_FORMAT` env var. Use this format for plan/report naming.
+## Documentation
 
-## Documentation Management
+All docs in `./docs/`:
+- `project-overview-pdr.md` - Product requirements
+- `code-standards.md` - Code conventions
+- `system-architecture.md` - Architecture details
+- `deployment-guide.md` - Deployment instructions
 
-We keep all important docs in `./docs` folder and keep updating them, structure like below:
+## Important Rules
 
-```
-./docs
-├── project-overview-pdr.md
-├── code-standards.md
-├── codebase-summary.md
-├── design-guidelines.md
-├── deployment-guide.md
-├── system-architecture.md
-└── project-roadmap.md
-```
-
-**IMPORTANT:** *MUST READ* and *MUST COMPLY* all *INSTRUCTIONS* in project `./CLAUDE.md`, especially *WORKFLOWS* section is *CRITICALLY IMPORTANT*, this rule is *MANDATORY. NON-NEGOTIABLE. NO EXCEPTIONS. MUST REMEMBER AT ALL TIMES!!!*
+- Follow YAGNI, KISS, DRY principles
+- Keep files under 200 lines
+- Use kebab-case file naming
+- Run `code-reviewer` agent after implementations
+- Date format from `$CK_PLAN_DATE_FORMAT` env var for plan naming
+- Reports go in `plans/reports/`, plans in `plans/`
