@@ -79,3 +79,5 @@ venv
 # Gemini CLI settings (symlink to .claude/.mcp.json)
 .gemini/settings.json
 .claude/settings.bak.json
+# Dashboard build
+apps/dashboard/.next/

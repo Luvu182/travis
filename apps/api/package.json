@@ -1,5 +1,5 @@
 {
-  "name": "@travis/api",
+  "name": "@jarvis/api",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -10,14 +10,16 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
+    "@hono/zod-validator": "^0.7.5",
     "@larksuiteoapi/node-sdk": "^1.28.0",
-    "@travis/config": "workspace:*",
-    "@travis/core": "workspace:*",
-    "@travis/db": "workspace:*",
+    "@jarvis/config": "workspace:*",
+    "@jarvis/core": "workspace:*",
+    "@jarvis/db": "workspace:*",
     "dotenv": "^16.4.0",
     "drizzle-orm": "^0.36.0",
     "grammy": "^1.21.0",
-    "hono": "^4.6.0"
+    "hono": "^4.6.0",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

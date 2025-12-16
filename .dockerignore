@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+**/node_modules/
+**/.pnpm-store/
+
+# Build artifacts
+dist/
+build/
+.turbo/
+**/dist/
+**/build/
+**/.turbo/
+
+# Development files
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+docs/
+plans/
+
+# Tests
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/*.spec.js
+coverage/
+.nyc_output/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Misc
+.claude/
+.husky/
+.eslintcache
+.prettierignore
+.editorconfig

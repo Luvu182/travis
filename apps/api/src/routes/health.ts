@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
-import { db } from '@travis/db';
-import { sql } from 'drizzle-orm';
+import { checkDatabaseConnection } from '@jarvis/db';
 
 export const healthRoutes = new Hono();
 
@@ -11,7 +10,8 @@ healthRoutes.get('/', async (c) => {
   };
 
   try {
-    await db.execute(sql`SELECT 1`);
+    // Use checkDatabaseConnection from @jarvis/db instead of direct SQL execution
+    await checkDatabaseConnection();
     checks.database = true;
   } catch (error) {
     console.error('Database health check failed:', error);

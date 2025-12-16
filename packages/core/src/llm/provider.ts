@@ -1,6 +1,6 @@
 import { google } from '@ai-sdk/google';
 import { openai } from '@ai-sdk/openai';
-import { env } from '@travis/config';
+import { env } from '@jarvis/config';
 import type { LanguageModelV1 } from 'ai';
 
 // Model configurations using gemini-2.5-flash-lite and embedding-001

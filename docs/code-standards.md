@@ -1,4 +1,4 @@
-# Travis - Code Standards & Architecture
+# J.A.R.V.I.S - Code Standards & Architecture
 
 **Last Updated:** 2025-12-16
 **Phase:** 03 - Memory Layer Implementation
@@ -23,7 +23,7 @@
 ### Organization Pattern (Turborepo)
 
 ```
-travis/
+jarvis/
 ├── apps/
 │   └── api/                    # Hono API server
 │       ├── src/
@@ -166,7 +166,7 @@ import { sql } from 'drizzle-orm';
 import postgres from 'postgres';
 
 // Internal packages
-import { env } from '@travis/config';
+import { env } from '@jarvis/config';
 import * as schema from './schema.js';
 
 // Local imports
@@ -519,12 +519,12 @@ export const env = envSchema.parse(process.env);
 // packages/db/package.json
 {
   "dependencies": {
-    "@travis/config": "workspace:*"
+    "@jarvis/config": "workspace:*"
   }
 }
 ```
 
-**Import path:** `@travis/config`
+**Import path:** `@jarvis/config`
 
 ### External Dependencies
 - Keep versions in sync across monorepo
@@ -726,4 +726,4 @@ const combined = await multiSearch(['query1', 'query2'], { limit: 5 });
 
 ---
 
-*Code standards and architectural patterns for Travis Phase 03: Memory Layer*
+*Code standards and architectural patterns for J.A.R.V.I.S Phase 03: Memory Layer*

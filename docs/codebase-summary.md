@@ -1,4 +1,4 @@
-# Travis - Codebase Summary
+# J.A.R.V.I.S - Codebase Summary
 
 **Last Updated:** 2025-12-16
 **Phase:** 03 - Memory Layer REFACTORED (mem0 OSS) + Phase 04 Complete
@@ -6,14 +6,15 @@
 
 ## Project Overview
 
-Travis is a Vietnamese executive assistant chatbot with long-term memory capabilities, designed for multi-platform deployment (Telegram and Lark Suite). The system leverages AI-powered information extraction and semantic search through PostgreSQL vector embeddings.
+J.A.R.V.I.S is a Vietnamese executive assistant chatbot with long-term memory capabilities, designed for multi-platform deployment (Telegram and Lark Suite). The system leverages AI-powered information extraction and semantic search through PostgreSQL vector embeddings.
 
 ## Architecture
 
 ```
-Travis (Monorepo)
+J.A.R.V.I.S (Monorepo)
 ├── apps/
-│   └── api/              # Hono API server (TypeScript)
+│   ├── api/              # Hono API server (TypeScript)
+│   └── dashboard/        # Next.js admin UI (Phase 01 - Complete)
 ├── packages/
 │   ├── config/           # Environment validation & config mgmt
 │   ├── db/               # Database layer (Drizzle ORM + pgvector)
@@ -41,6 +42,68 @@ Travis (Monorepo)
 | **Telegram SDK** | grammY | Latest |
 | **Lark SDK** | @larksuiteoapi/node-sdk | Latest |
 | **Language** | TypeScript | 5.0+ |
+| **Dashboard UI** | Next.js 15 + React 19 | Latest |
+| **Component Library** | Shadcn/ui | Latest |
+| **Icon Library** | RemixIcon React | Latest |
+| **Theme Management** | next-themes | Latest |
+| **State Management** | Zustand | 5.0+ |
+| **Styling** | Tailwind CSS 3.4 | Latest |
+| **Chart Library** | Chart.js + react-chartjs-2 | Latest |
+| **Auth** | Jose (JWT) | 5.2+ |
+
+## Dashboard App (Phase 01 - Complete)
+
+### Overview
+Next.js-based admin UI for J.A.R.V.I.S system. Provides group management, message monitoring, memory inspection, and analytics visualization with dark/light theme support.
+
+### Configuration Files
+- **next.config.ts** - Standalone output, strict mode, transpilePackages: ['@jarvis/config']
+- **tailwind.config.ts** - HSL-based CSS variables, dark mode class strategy, chart colors
+- **postcss.config.mjs** - Tailwind CSS processor
+- **tsconfig.json** - ES2020 target, bundler resolution, path alias: @/* → ./src/*
+- **components.json** - Shadcn/ui configuration
+
+### Project Structure
+```
+apps/dashboard/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── layout.tsx          # Root layout with theme provider
+│   │   ├── page.tsx            # Home page
+│   │   ├── globals.css         # CSS variables (colors, radius)
+│   │   └── dashboard/
+│   │       ├── page.tsx        # Dashboard main view
+│   │       └── layout.tsx      # Dashboard layout (sidebar/nav)
+│   ├── components/
+│   │   └── theme-provider.tsx  # Theme context provider
+│   ├── lib/
+│   │   └── utils.ts            # Utility functions (cn, etc)
+│   └── stores/                 # Zustand stores
+├── package.json                # Dependencies & scripts
+├── tailwind.config.ts          # Tailwind configuration
+├── postcss.config.mjs          # PostCSS pipeline
+├── next.config.ts              # Next.js configuration
+└── tsconfig.json               # TypeScript configuration
+```
+
+### Key Features
+- **Theme Support:** Dark/light mode with next-themes
+- **Responsive Layout:** Tailwind CSS responsive utilities
+- **Analytics Dashboards:** Chart.js integration via react-chartjs-2
+- **State Management:** Zustand for client-side state
+- **JWT Authentication:** Jose library for token handling
+- **UI Components:** Shadcn/ui library (Tailwind-based)
+
+### Scripts
+- `dev` - Start dev server on port 3001
+- `build` - Production build
+- `start` - Start production server
+- `lint` - ESLint validation
+
+### Dev Server
+```bash
+pnpm --filter @jarvis/dashboard dev  # Runs on http://localhost:3001
+```
 
 ## Database Schema (Phase 02)
 
@@ -59,7 +122,7 @@ Used by: `groups`, `users`
 ### Core Tables
 
 #### 1. `groups` - Multi-platform Chat Groups
-Represents Telegram groups or Lark suites integrated with Travis.
+Represents Telegram groups or Lark suites integrated with J.A.R.V.I.S.
 
 | Column | Type | Constraints | Purpose |
 |--------|------|-----------|---------|
@@ -198,7 +261,7 @@ max: 20
 - searchByVector, searchMemories
 - getGroupStats
 
-**Memory Operations:** Now handled by mem0 OSS (see `@travis/core/memory`)
+**Memory Operations:** Now handled by mem0 OSS (see `@jarvis/core/memory`)
 
 ## Package Exports (`packages/db/src/index.ts`)
 
@@ -239,7 +302,7 @@ All types are fully type-safe with Drizzle ORM inference.
 - **Distance Metric:** Cosine similarity
 - **Deduplication:** Automatic via mem0
 
-### Memory Operations (via `@travis/core/memory`)
+### Memory Operations (via `@jarvis/core/memory`)
 
 ```typescript
 // Add memory (with auto extraction & deduplication)
@@ -445,6 +508,8 @@ Request (task + prompt)
 
 | Metric | Value |
 |--------|-------|
+| **Applications** | 2 (api + dashboard) |
+| **Packages** | 3 (config, db, core) |
 | **Database Tables** | 4 (extractedInfo + memories removed) |
 | **Enums** | 1 (info_type removed) |
 | **CRUD Operations** | 7 (simplified, mem0 handles memory) |
@@ -455,8 +520,11 @@ Request (task + prompt)
 | **Test Suites** | 4 (LLM layer) |
 | **Test Coverage** | 33/33 PASS (100%) |
 | **Code Reduction (Phase 03)** | 70% (~500 lines → ~150 lines) |
+| **Dashboard Components** | Shadcn/ui + custom (planned) |
+| **Codebase Files** | ~150+ files (repomix snapshot available) |
 
 ---
 
+*Phase 01 (Dashboard): Project setup complete with Next.js 15, Tailwind CSS, Shadcn/ui, Zustand state management*
 *Phase 03 REFACTORED: mem0 OSS self-hosted with 70% code reduction, Gemini 2.5-flash-lite LLM + embedding-001 (1536D)*
 *Phase 04 complete: LLM layer integrated with task routing, fallback mechanism, Vietnamese prompts, streaming support, and 33/33 tests passing.*

@@ -1,6 +1,6 @@
 import { generateText, streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { env } from '@travis/config';
+import { env } from '@jarvis/config';
 
 // GPT-4o for fallback
 const gpt4o = openai('gpt-4o');

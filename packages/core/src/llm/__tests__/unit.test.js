@@ -51,7 +51,7 @@ const createGetModelName = (models) => (model) => {
 
 // Mock system prompts (mirrors prompts.ts)
 const SYSTEM_PROMPTS = {
-  assistant: `Bạn là Travis - trợ lý thông minh cho nhóm chat. Nhiệm vụ:
+  assistant: `Bạn là J.A.R.V.I.S - trợ lý thông minh cho nhóm chat. Nhiệm vụ:
 - Ghi nhớ thông tin quan trọng từ cuộc hội thoại
 - Trả lời câu hỏi dựa trên thông tin đã lưu
 - Hỗ trợ theo dõi công việc, deadline, quyết định
@@ -204,7 +204,7 @@ test('Unit - Vietnamese Prompts', async (t) => {
 
   await t.test('assistant prompt contains key phrases', () => {
     const prompt = SYSTEM_PROMPTS.assistant;
-    assert.ok(prompt.includes('Travis'), 'should mention Travis');
+    assert.ok(prompt.includes('J.A.R.V.I.S'), 'should mention J.A.R.V.I.S');
     assert.ok(prompt.includes('Ghi nhớ') || prompt.includes('ghi nhớ'), 'should mention memory');
     assert.ok(prompt.includes('Trả lời') || prompt.includes('trả lời'), 'should mention response');
   });

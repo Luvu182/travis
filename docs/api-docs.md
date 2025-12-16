@@ -1,4 +1,4 @@
-# Travis - Core API Documentation
+# J.A.R.V.I.S - Core API Documentation
 
 **Last Updated:** 2025-12-16
 **Phase:** 03 - Memory Layer Implementation
@@ -7,8 +7,8 @@
 ## Overview
 
 Complete API reference for:
-1. **Memory Layer** (`@travis/core/memory`) - Embeddings, extraction, storage, retrieval
-2. **Database Operations** (`@travis/db`) - CRUD operations with vector search
+1. **Memory Layer** (`@jarvis/core/memory`) - Embeddings, extraction, storage, retrieval
+2. **Database Operations** (`@jarvis/db`) - CRUD operations with vector search
 
 See separate document: [memory-layer-api.md](./memory-layer-api.md) for detailed memory API reference.
 
@@ -46,7 +46,7 @@ import {
   searchByVector,
   searchMemories,
   getGroupStats,
-} from '@travis/db';
+} from '@jarvis/db';
 ```
 
 ## Client Operations
@@ -1060,7 +1060,7 @@ import {
   saveExtractedInfo,
   searchMemories,
   getGroupStats,
-} from '@travis/db';
+} from '@jarvis/db';
 
 // 1. Create/update group
 const group = await upsertGroup({
@@ -1117,7 +1117,7 @@ For complete memory layer API, see [memory-layer-api.md](./memory-layer-api.md).
 
 ### Embeddings
 ```typescript
-import { embedText, embedBatch, cosineSimilarity } from '@travis/core';
+import { embedText, embedBatch, cosineSimilarity } from '@jarvis/core';
 
 const embedding = await embedText('text content');           // 768D vector
 const embeddings = await embedBatch(['text1', 'text2']);    // Batch
@@ -1126,7 +1126,7 @@ const similarity = cosineSimilarity(embedding1, embedding2); // 0.0-1.0
 
 ### Extraction
 ```typescript
-import { extractInfo, extractBatch, normalizeDueDate } from '@travis/core';
+import { extractInfo, extractBatch, normalizeDueDate } from '@jarvis/core';
 
 const items = await extractInfo(message, context);           // Vietnamese extraction
 const batches = await extractBatch(messages);                // Batch
@@ -1135,7 +1135,7 @@ const isoDate = normalizeDueDate('25/12/2025');             // ISO format
 
 ### Storage
 ```typescript
-import { storeExtractedInfo, storeMemory, storeBatch } from '@travis/core';
+import { storeExtractedInfo, storeMemory, storeBatch } from '@jarvis/core';
 
 await storeExtractedInfo({ messageId, groupId, items });     // Save with embeddings
 await storeMemory({ groupId, userId, content, memoryType }); // Long-term memory
@@ -1144,7 +1144,7 @@ await storeBatch([...]);                                      // Batch storage
 
 ### Retrieval
 ```typescript
-import { searchExtractedInfo, searchMemory, multiSearch } from '@travis/core';
+import { searchExtractedInfo, searchMemory, multiSearch } from '@jarvis/core';
 
 const results = await searchExtractedInfo(query, options);      // Semantic search
 const memories = await searchMemory(query, options);            // Memory search

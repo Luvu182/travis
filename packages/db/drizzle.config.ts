@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import type { Config } from 'drizzle-kit';
-import { env } from '@travis/config';
+import { env } from '@jarvis/config';
 
 export default {
   schema: './src/schema.ts',

@@ -130,7 +130,7 @@ export async function getRecentMessages(groupId: string, limit = 5) {
     .limit(limit);
 }
 
-// Note: Memory operations handled by mem0 OSS (see @travis/core/memory)
+// Note: Memory operations handled by mem0 OSS (see @jarvis/core/memory)
 
 // ==================== QUERY LOG OPERATIONS ====================
 

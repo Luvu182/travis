@@ -1,4 +1,4 @@
-# Travis - Memory Layer API Documentation
+# J.A.R.V.I.S - Memory Layer API Documentation
 
 **Last Updated:** 2025-12-16
 **Phase:** 03 - mem0 OSS Self-Hosted Integration (REFACTORED)

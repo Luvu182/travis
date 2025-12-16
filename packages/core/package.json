@@ -1,5 +1,5 @@
 {
-  "name": "@travis/core",
+  "name": "@jarvis/core",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -13,8 +13,8 @@
   "dependencies": {
     "@ai-sdk/google": "^2.0.0",
     "@ai-sdk/openai": "^1.0.0",
-    "@travis/config": "workspace:*",
-    "@travis/db": "workspace:*",
+    "@jarvis/config": "workspace:*",
+    "@jarvis/db": "workspace:*",
     "ai": "^4.0.0",
     "mem0ai": "^2.1.38",
     "zod": "^3.23.0"

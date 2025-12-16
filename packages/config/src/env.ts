@@ -32,7 +32,7 @@ const envSchema = z.object({
   DB_PORT: z.string().default('5432'),
   DB_USER: z.string().default('postgres'),
   DB_PASSWORD: z.string(),
-  DB_NAME: z.string().default('luxbot'),
+  DB_NAME: z.string().default('jarvis'),
 });
 
 export type Env = z.infer<typeof envSchema>;

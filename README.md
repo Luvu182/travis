@@ -1,4 +1,4 @@
-# Travis - Vietnamese Executive Assistant with Long-Term Memory
+# J.A.R.V.I.S - Vietnamese Executive Assistant with Long-Term Memory
 
 AI-powered chatbot with long-term memory using mem0, designed for Telegram and Lark Suite group chats.
 
@@ -25,7 +25,7 @@ AI-powered chatbot with long-term memory using mem0, designed for Telegram and L
 ## Project Structure
 
 ```
-Travis/
+J.A.R.V.I.S/
 ├── apps/
 │   └── api/              # Hono API server
 ├── packages/

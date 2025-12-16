@@ -1,5 +1,5 @@
 import { Memory } from 'mem0ai/oss';
-import { env } from '@travis/config';
+import { env } from '@jarvis/config';
 
 // Type definitions for mem0 responses
 export interface MemoryItem {

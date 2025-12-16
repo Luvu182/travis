@@ -1,5 +1,5 @@
 import { ErrorHandler } from 'hono';
-import { env } from '@travis/config';
+import { env } from '@jarvis/config';
 
 export const errorHandler: ErrorHandler = (err, c) => {
   console.error('Unhandled error:', err);

@@ -1,4 +1,4 @@
-import { saveMessage } from '@travis/db';
+import { saveMessage } from '@jarvis/db';
 
 /**
  * Store message for audit trail only
