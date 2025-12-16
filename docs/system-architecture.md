@@ -73,57 +73,48 @@ Travis is a modular, horizontally-scalable system designed for multi-platform ch
 
 **Components:**
 
-#### 2.1 Memory Layer (Phase 03)
-**Components:**
+#### 2.1 Memory Layer (Phase 03 - REFACTORED)
+**Architecture:** mem0 OSS Self-Hosted Integration
 
-a) **Embeddings (embeddings.ts)**
-- Model: Gemini text-embedding-004
-- Output: 768-dimensional vectors
-- Methods:
-  - `embedText(text)` - Single embedding generation
-  - `embedBatch(texts)` - Batch processing with parallelization
-  - `cosineSimilarity(a, b)` - Vector similarity calculation
-- Error handling: Validates non-empty text, throws on generation failure
+a) **mem0 Client (mem0-client.ts)**
+- Package: `mem0ai` (self-hosted, NOT cloud)
+- LLM: Gemini 2.5-flash-lite (extraction)
+- Embeddings: embedding-001 (1536D, NOT 768D)
+- Vector Store: PostgreSQL + pgvector
+- History Store: SQLite (local file)
+- Operations:
+  - `addMemory(userId, groupId, message, ...)` - Add with auto extraction/dedup
+  - `searchMemories(userId, groupId, query, limit)` - Semantic search
+  - `getAllMemories(userId, groupId, limit)` - Retrieve all
+  - `updateMemory(memoryId, newText)` - Update memory
+  - `deleteMemory(memoryId)` - Delete memory
+- Type Safety: MemoryItem interface with runtime type guards (no any/unknown)
 
 b) **Information Extraction (extractor.ts)**
-- Model: Gemini 2.0-flash-exp (Vietnamese-optimized)
-- Confidence filtering: ≥0.7 threshold
-- Classification types:
-  - `task` - Work assignments
-  - `decision` - Agreements/choices
-  - `deadline` - Time-bound items
-  - `important` - Critical info
-  - `general` - Other insights
-- Methods:
-  - `extractInfo(message, context)` - Single message extraction
-  - `extractBatch(messages)` - Batch extraction with parallelization
-  - `normalizeDueDate(dateStr)` - ISO date validation/conversion
-- Vietnamese extraction prompt optimized for group chats
+- Simplified delegation to mem0.add()
+- Method:
+  - `extractAndStore(userId, groupId, message, ...)` - Wrapper for mem0.add()
+- mem0 handles:
+  - Automatic extraction using Gemini 2.5-flash-lite
+  - Deduplication against existing memories
+  - Embedding generation (1536D)
+  - Storage in pgvector
 
 c) **Storage Layer (storage.ts)**
-- Methods:
-  - `storeExtractedInfo(messageId, groupId, items)` - Save with embeddings
-  - `storeMemory(groupId, userId, content, type)` - Long-term memory storage
-  - `storeBatch(batch)` - Batch processing with sequential execution
-- Features:
-  - Auto-generates embeddings during storage
-  - Metadata preservation (confidence, assignee)
-  - Due date normalization
-  - Async-safe with proper error handling
+- **Message audit trail ONLY** (not memory)
+- Method:
+  - `storeMessage(platformMessageId, groupId, userId, content, ...)` - Raw message log
+- Memory storage handled by mem0 internally
 
 d) **Retrieval Layer (retriever.ts)**
+- Wrappers for mem0 search operations
 - Methods:
-  - `searchExtractedInfo(query, options)` - Semantic search with filters
-  - `searchMemory(query, options)` - Memory semantic search
-  - `getRecentExtractedInfo(groupId, limit)` - Temporal retrieval
-  - `searchTasksByAssignee(groupId, assignee)` - Task filtering
-  - `searchUpcomingDeadlines(groupId)` - Deadline retrieval
-  - `multiSearch(queries, options)` - Multi-query with deduplication
-- Features:
-  - pgvector-based cosine similarity search
-  - Configurable similarity threshold (default: 0.5)
-  - Result deduplication across multiple queries
-  - Sorted by similarity score
+  - `searchRelevantMemories(userId, groupId, query, limit)` - Wrapper for mem0.search()
+  - `formatMemoriesForPrompt(memories)` - Format for LLM prompts
+- mem0 handles:
+  - Semantic search with pgvector
+  - Similarity scoring
+  - User/group filtering
 
 #### 2.2 LLM Layer (Phase 04 - NEW)
 **Unified LLM Service with Task-Based Routing**
@@ -158,18 +149,19 @@ c) **Vietnamese System Prompts (`prompts.ts`)**
   - Same processing capabilities
   - Seamless switchover
 
-#### 2.3 Information Extraction Pipeline
+#### 2.3 Information Extraction Pipeline (mem0-powered)
 Extracts structured data from unstructured messages:
 
 **Process:**
-1. Receive raw message with optional context
-2. Call LLM for extraction with confidence scoring
-3. Filter results (confidence ≥0.7)
-4. Generate embedding (768D)
-5. Store with metadata in database
-6. Enable semantic search retrieval
+1. Receive raw message with context (userId, groupId, senderName, etc.)
+2. Call mem0.add() which:
+   - Extracts info using Gemini 2.5-flash-lite
+   - Generates 1536D embedding with embedding-001
+   - Deduplicates against existing memories
+   - Stores in PostgreSQL pgvector table
+3. mem0 handles all extraction, embedding, deduplication internally
 
-**Output:** ExtractedInfo records with embeddings and confidence scores
+**Output:** Memory stored in mem0's internal tables (not extractedInfo)
 
 ### 3. Database Layer (`packages/db`)
 
@@ -187,9 +179,9 @@ Extracts structured data from unstructured messages:
 1. `groups` - Platform chat groups/suites
 2. `users` - Individual users
 3. `messages` - Raw message audit trail
-4. `extractedInfo` - Structured information (vector-enabled)
-5. `memories` - Long-term memory storage (vector-enabled)
-6. `queryLogs` - Analytics/debugging
+4. `queryLogs` - Analytics/debugging
+
+**Note:** extractedInfo and memories tables REMOVED (Phase 03 refactor - mem0 manages own tables)
 
 #### 3.2 Client (postgres.js)
 - Lazy connection initialization
@@ -200,7 +192,7 @@ Extracts structured data from unstructured messages:
 - Health check function
 - Graceful shutdown
 
-#### 3.3 Operations (14 CRUD + Search)
+#### 3.3 Operations (SIMPLIFIED after Phase 03 refactor)
 
 **Groups (2 ops):**
 - upsertGroup
@@ -214,33 +206,26 @@ Extracts structured data from unstructured messages:
 - saveMessage
 - getRecentMessages
 
-**Extracted Info (2 ops):**
-- saveExtractedInfo
-- getExtractedInfoByGroup
-
-**Memories (2 ops):**
-- saveMemory
-- getRecentMemories
-
 **Query Logs (1 op):**
 - saveQueryLog
 
-**Vector Search (2 ops):**
-- searchByVector (extractedInfo with filters)
-- searchMemories (memory semantic search)
-
-**Analytics (1 op):**
+**REMOVED (Phase 03 refactor - mem0 handles):**
+- saveExtractedInfo, getExtractedInfoByGroup
+- saveMemory, getRecentMemories
+- searchByVector, searchMemories
 - getGroupStats
 
-#### 3.4 Vector Search
-- **Embeddings:** 768-dimensional Gemini text-embedding-004 vectors
-- **Storage:** PostgreSQL pgvector extension
-- **Distance Metric:** Cosine similarity (1 - dot_product)
-- **Indexes:** Planned HNSW optimization (Phase 05)
+#### 3.4 Vector Search (mem0-powered)
+- **Embeddings:** 1536-dimensional Gemini embedding-001 vectors (NOT 768D)
+- **Storage:** PostgreSQL pgvector extension (managed by mem0)
+- **Distance Metric:** Cosine similarity
+- **Deduplication:** Automatic via mem0
 - **Use Cases:**
-  - Semantic search on extracted information
+  - Semantic search on memories (via mem0.search())
   - Memory retrieval for context generation
-  - Task/deadline discovery by semantic similarity
+  - Automatic deduplication of similar memories
+
+**Note:** Vector search operations delegated to mem0 OSS (no custom implementation)
 
 ### 4. Configuration Layer (`packages/config`)
 
@@ -400,16 +385,19 @@ pnpm dev
   - Vietnamese-optimized responses
   - Via Vercel AI SDK (generateText, streamText)
   - Default for all routing decisions
+  - **ALSO used by mem0** for memory extraction
 
-- **Embeddings:** `text-embedding-004` (future memory integration)
-  - 768D vector output
-  - Semantic search for long-term memory
+- **Embeddings:** `embedding-001` (mem0 integration)
+  - 1536D vector output (NOT 768D)
+  - Used by mem0 for semantic memory search
+  - PostgreSQL + pgvector storage
 
 - **Operations:**
   - Task-based text generation (5 task types)
   - Streaming support via AsyncGenerator
   - Vietnamese language optimization
   - Automatic fallback on API errors
+  - **mem0 memory extraction** (via Memory class)
 
 ### OpenAI API
 - **Fallback LLM:** `gpt-4o-mini`
@@ -516,13 +504,16 @@ pnpm dev
 
 ## Phase Completion Status
 
-### Phase 03 (Memory Layer) - COMPLETED
-- Embeddings layer with 768D Gemini text-embedding-004
-- Vietnamese-optimized extraction with confidence filtering (≥0.7)
-- Storage layer with automatic embedding generation
-- Retrieval layer with multi-search and deduplication
-- Vector search with pgvector cosine similarity
-- Status: 43/43 tests passing
+### Phase 03 (Memory Layer) - COMPLETED (REFACTORED)
+- mem0 OSS self-hosted integration (`mem0ai` package)
+- Gemini 2.5-flash-lite LLM for extraction
+- Gemini embedding-001 (1536D vectors, NOT 768D)
+- PostgreSQL + pgvector vector store (managed by mem0)
+- SQLite history store (local file)
+- Automatic deduplication via mem0
+- Type-safe MemoryItem interface (no any/unknown)
+- 70% code reduction (~500 lines → ~150 lines)
+- Status: Complete, ready for testing
 
 ### Phase 04 (LLM Integration) - COMPLETED
 - Gemini 2.5-flash-lite primary model with Vercel AI SDK
@@ -591,20 +582,19 @@ connect_timeout: 10
 
 | Term | Definition |
 |------|-----------|
-| **Embedding** | 768-dimensional vector from Gemini text-embedding-004, semantic meaning |
-| **Vector Search** | Cosine similarity search across embeddings (0.0-1.0 scores) |
-| **pgvector** | PostgreSQL extension for vector operations |
-| **Confidence** | Extraction confidence score (0.0-1.0), filtered ≥0.7 |
+| **Embedding** | 1536-dimensional vector from Gemini embedding-001 (NOT 768D) |
+| **Vector Search** | Cosine similarity search via mem0 + pgvector |
+| **pgvector** | PostgreSQL extension for vector operations (managed by mem0) |
 | **Lazy Init** | Database connection only created on first use |
 | **Mutex** | Mutual exclusion to prevent race conditions |
-| **mem0** | Long-term memory framework for AI agents |
-| **Gemini 2.0-flash** | Google's fast LLM for extraction |
-| **text-embedding-004** | Google's 768D embedding model |
+| **mem0** | OSS self-hosted memory framework (mem0ai package) |
+| **Gemini 2.5-flash-lite** | Google's fast LLM (NOT 2.5, flash-lite only) |
+| **embedding-001** | Google's 1536D embedding model (NOT text-embedding-004) |
 | **Drizzle ORM** | TypeScript-first ORM with type inference |
 | **Hono** | Lightweight, fast web framework |
 | **WAL** | Write-Ahead Logging (PostgreSQL backup) |
 | **HNSW** | Hierarchical Navigable Small World (vector index) |
-| **Deduplication** | Result combination with highest similarity score retention |
+| **Deduplication** | Automatic via mem0 (no manual implementation) |
 
 ---
 

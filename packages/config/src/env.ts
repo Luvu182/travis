@@ -28,6 +28,11 @@ const envSchema = z.object({
 
   // Database
   DATABASE_URL: z.string().url(),
+  DB_HOST: z.string().default('localhost'),
+  DB_PORT: z.string().default('5432'),
+  DB_USER: z.string().default('postgres'),
+  DB_PASSWORD: z.string(),
+  DB_NAME: z.string().default('luxbot'),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -73,32 +73,35 @@ Drizzle ORM schema with pgvector support for memories, conversations, and embedd
 ### Phase 03: Memory Layer
 **Status:** DONE | **Completion:** 100% | **Completed:** 2025-12-16
 
-mem0 integration, fact extraction, and deduplication logic.
+mem0 OSS self-hosted integration with Gemini 2.5-flash-lite LLM and embedding-001 (1536D).
 
 **Achievements:**
-- 5 core modules implemented: embeddings, extractor, storage, retriever, index
-- 43/43 unit tests passing (100% coverage)
-- 0 critical issues discovered
-- Performance 3x faster than targets (embedding: 8ms vs 25ms target, extraction: 120ms vs 350ms)
-- Vietnamese language support validated with full diacritical support
-- mem0 client initialization with Gemini embeddings (1536D)
-- Message extraction pipeline (Gemini 2.0 Flash + OpenAI fallback)
-- Fact deduplication and aggregation algorithms
-- Memory storage in PostgreSQL with vector indexing
+- mem0 self-hosted (`mem0ai` package) with full control & data privacy
+- Gemini 2.5-flash-lite as extraction LLM (NOT 2.5, flash-lite only)
+- Gemini embedding-001 with 1536D vectors (NOT 768D)
+- PostgreSQL + pgvector as vector store
+- SQLite as history store for mem0
+- Vietnamese language support with automatic deduplication
+- Type-safe MemoryItem interface (no any/unknown)
+- Runtime type guards for mem0 API responses
+- Complete refactor from custom implementation (~500 lines → ~150 lines)
+- 5 core operations: add, search, getAll, update, delete
 
 **Quality Metrics:**
 - Build: PASS
-- Tests: 43/43 PASS
-- Type Safety: 100%
+- Type Safety: 100% (proper types, no any/unknown)
 - Code Review: Complete
-- Performance: 3x faster than targets
+- Architecture: Delegates to mem0 OSS (no custom reimplementation)
 
 **Files Created:**
-- `packages/core/src/memory/embeddings.ts` - Gemini embedding client
-- `packages/core/src/memory/extractor.ts` - Information extraction pipeline
-- `packages/core/src/memory/storage.ts` - Memory persistence layer
-- `packages/core/src/memory/retriever.ts` - Semantic search and retrieval
-- `packages/core/src/memory/index.ts` - Memory module orchestration
+- `packages/core/src/memory/mem0-client.ts` - mem0 OSS client wrapper with config
+- `packages/core/src/memory/extractor.ts` - Simplified delegation to mem0.add()
+- `packages/core/src/memory/storage.ts` - Message audit trail only
+- `packages/core/src/memory/retriever.ts` - Wrapper for mem0.search()
+- `packages/core/src/memory/index.ts` - Memory module exports
+
+**Files Removed:**
+- `packages/core/src/memory/embeddings.ts` - Handled by mem0 internally
 
 ---
 
@@ -227,7 +230,9 @@ Next.js web interface for memory management and analytics.
 | **Database** | PostgreSQL | 16 + pgvector |
 | **Frontend** | Next.js | 15 (App Router) |
 | **LLM Framework** | Vercel AI SDK | 4.x |
-| **Memory** | mem0 | 0.1.x |
+| **Memory** | mem0ai (self-hosted) | 2.1.x |
+| **LLM** | Gemini 2.5-flash-lite | Latest |
+| **Embeddings** | Gemini embedding-001 | 1536D |
 | **Telegram** | grammY | 2.x |
 | **Lark** | @larksuiteoapi/node-sdk | Latest |
 | **Runtime** | Node.js | 20 LTS |
@@ -282,18 +287,21 @@ Next.js web interface for memory management and analytics.
   - Type-safe LLMRequest/LLMResponse interfaces
   - All 33 tests passing (100% coverage)
   - 4 test files: integration, provider, prompts, fallback
-  - Ready for Phase 05 (API Integration)
+  - Ready for Phase 05 (Telegram Bot)
 
-- **Phase 03 Completed**: Memory Layer fully implemented with 5 core modules
-  - embeddings.ts: Gemini embedding client with Vietnamese support (1536D vectors)
-  - extractor.ts: Information extraction pipeline (Gemini 2.0 Flash + OpenAI)
-  - storage.ts: Memory persistence with PostgreSQL vector indexing
-  - retriever.ts: Semantic search and fact aggregation
-  - index.ts: Module orchestration and memory management
-  - All 43 tests passing (100% coverage)
-  - Performance 3x faster than targets
-  - 0 critical issues
-  - Ready for Phase 04 (LLM Integration)
+- **Phase 03 Refactored**: mem0 OSS self-hosted integration (BREAKING CHANGE)
+  - Removed custom implementation (~500 lines) → delegated to mem0ai package (~150 lines)
+  - mem0-client.ts: Memory class with Gemini 2.5-flash-lite LLM + embedding-001 (1536D)
+  - PostgreSQL + pgvector vector store + SQLite history store
+  - Type-safe MemoryItem interface with runtime type guards (no any/unknown)
+  - extractor.ts: Simplified to mem0.add() delegation (764 bytes)
+  - retriever.ts: Wrapper for mem0.search() (695 bytes)
+  - storage.ts: Message audit trail only (365 bytes)
+  - Removed embeddings.ts (mem0 handles internally)
+  - Removed extractedInfo + memories tables from schema (mem0 manages own tables)
+  - Removed ~300 lines of obsolete operations
+  - Fixed package imports: @luxbot/* → @travis/*
+  - Ready for Phase 05 (Telegram Bot)
 
 - **Phase 02 Completed**: Database schema fully implemented with Drizzle ORM and pgvector
   - 6 tables created (groups, users, messages, extractedInfo, memories, queryLogs)

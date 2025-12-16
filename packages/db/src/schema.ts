@@ -17,14 +17,6 @@ import { sql } from 'drizzle-orm';
 
 export const platformEnum = pgEnum('platform_type', ['telegram', 'lark']);
 
-export const infoTypeEnum = pgEnum('info_type', [
-  'task',
-  'decision',
-  'deadline',
-  'important',
-  'general',
-]);
-
 // ==================== TABLES ====================
 
 // Groups/Chats table
@@ -75,46 +67,7 @@ export const messages = pgTable('messages', {
   userIdx: index('idx_messages_user').on(table.userId),
 }));
 
-// Extracted info table (tasks, decisions, deadlines)
-export const extractedInfo = pgTable('extracted_info', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  messageId: uuid('message_id').references(() => messages.id, { onDelete: 'cascade' }),
-  groupId: uuid('group_id').references(() => groups.id, { onDelete: 'cascade' }),
-  infoType: infoTypeEnum('info_type').notNull(),
-  content: text('content').notNull(),
-  summary: text('summary'),
-  assigneeUserId: uuid('assignee_user_id').references(() => users.id),
-  dueDate: timestamp('due_date', { withTimezone: true }),
-  status: varchar('status', { length: 50 }).default('active'),
-  embedding: vector('embedding', { dimensions: 1536 }),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-  metadata: jsonb('metadata').default({}),
-}, (table) => ({
-  infoTypeIdx: index('idx_extracted_info_type').on(table.infoType),
-  groupCreatedIdx: index('idx_extracted_info_group_created')
-    .on(table.groupId, table.createdAt),
-  assigneeIdx: index('idx_extracted_info_assignee').on(table.assigneeUserId),
-  statusIdx: index('idx_extracted_info_status').on(table.status),
-}));
-
-// Memories table (for mem0 or direct vector storage)
-export const memories = pgTable('memories', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: varchar('user_id', { length: 255 }),  // mem0 user context
-  agentId: varchar('agent_id', { length: 255 }),  // mem0 agent context
-  groupId: uuid('group_id').references(() => groups.id),
-  content: text('content').notNull(),
-  embedding: vector('embedding', { dimensions: 1536 }),
-  memoryType: varchar('memory_type', { length: 50 }),  // fact, preference, context
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-  metadata: jsonb('metadata').default({}),
-}, (table) => ({
-  userIdx: index('idx_memories_user').on(table.userId),
-  groupIdx: index('idx_memories_group').on(table.groupId),
-  memoryTypeIdx: index('idx_memories_type').on(table.memoryType),
-}));
+// Note: Memory tables managed by mem0 OSS (not in this schema)
 
 // Query logs (for analytics)
 export const queryLogs = pgTable('query_logs', {
@@ -138,12 +91,6 @@ export type NewUser = typeof users.$inferInsert;
 
 export type Message = typeof messages.$inferSelect;
 export type NewMessage = typeof messages.$inferInsert;
-
-export type ExtractedInfo = typeof extractedInfo.$inferSelect;
-export type NewExtractedInfo = typeof extractedInfo.$inferInsert;
-
-export type Memory = typeof memories.$inferSelect;
-export type NewMemory = typeof memories.$inferInsert;
 
 export type QueryLog = typeof queryLogs.$inferSelect;
 export type NewQueryLog = typeof queryLogs.$inferInsert;

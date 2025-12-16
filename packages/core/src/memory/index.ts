@@ -1,26 +1,19 @@
-// Embeddings
-export { embedText, embedBatch, cosineSimilarity } from './embeddings.js';
-
-// Extraction
+// Mem0 client - core memory operations
 export {
-  extractInfo,
-  extractBatch,
-  normalizeDueDate,
-  extractedInfoSchema,
-  type ExtractedInfo,
-  type ExtractedItem,
-} from './extractor.js';
+  memory,
+  addMemory,
+  searchMemories,
+  getAllMemories,
+  updateMemory,
+  deleteMemory,
+  type MemoryItem,
+} from './mem0-client.js';
 
-// Storage
-export { storeExtractedInfo, storeMemory, storeBatch } from './storage.js';
+// Simplified extractor (delegates to mem0)
+export { extractAndStore } from './extractor.js';
 
-// Retrieval
-export {
-  searchExtractedInfo,
-  searchMemory,
-  getRecentExtractedInfo,
-  searchTasksByAssignee,
-  searchUpcomingDeadlines,
-  multiSearch,
-  type MemorySearchResult,
-} from './retriever.js';
+// Simplified retriever (wraps mem0 search)
+export { searchRelevantMemories, formatMemoriesForPrompt } from './retriever.js';
+
+// Message storage (audit trail only, not for memory)
+export { storeMessage } from './storage.js';

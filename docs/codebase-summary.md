@@ -1,8 +1,8 @@
 # Travis - Codebase Summary
 
 **Last Updated:** 2025-12-16
-**Phase:** 04 - LLM Integration Completion
-**Status:** LLM layer complete with Gemini 2.5-flash-lite primary + GPT-4o fallback, task-based routing, Vietnamese prompts, and streaming support
+**Phase:** 03 - Memory Layer REFACTORED (mem0 OSS) + Phase 04 Complete
+**Status:** mem0 self-hosted integration complete with 70% code reduction, LLM layer complete with Gemini 2.5-flash-lite primary + GPT-4o fallback
 
 ## Project Overview
 
@@ -37,15 +37,15 @@ Travis (Monorepo)
 | **Embeddings** | Gemini embedding-001 | 1536D vectors |
 | **LLM Primary** | Google Gemini 2.5-flash-lite | Latest |
 | **LLM Fallback** | OpenAI GPT-4o-mini | Latest |
-| **Memory Framework** | mem0 + Vercel AI SDK | Latest |
+| **Memory Framework** | mem0ai (self-hosted) + Vercel AI SDK | Latest |
 | **Telegram SDK** | grammY | Latest |
 | **Lark SDK** | @larksuiteoapi/node-sdk | Latest |
 | **Language** | TypeScript | 5.0+ |
 
 ## Database Schema (Phase 02)
 
-### Overview
-6 core tables with relational integrity, automatic timestamps, and vector search capabilities:
+### Overview (Phase 03 Refactored)
+4 core tables (extractedInfo + memories REMOVED, managed by mem0):
 
 ### Enums
 
@@ -53,9 +53,8 @@ Travis (Monorepo)
 Values: `'telegram'` | `'lark'`
 Used by: `groups`, `users`
 
-#### `info_type`
-Values: `'task'` | `'decision'` | `'deadline'` | `'important'` | `'general'`
-Used by: `extractedInfo`
+#### `info_type` (REMOVED - Phase 03 refactor)
+**Deprecated:** extractedInfo table removed, mem0 manages memory types internally
 
 ### Core Tables
 
@@ -112,59 +111,11 @@ Complete audit trail of all platform messages.
 - `idx_messages_group_created` on `(groupId, createdAt)` - Chronological queries
 - `idx_messages_user` on `(userId)` - User message history
 
-**Relationships:** Parent of `extractedInfo` (cascade)
+**Relationships:** None (extractedInfo table removed)
 
-#### 4. `extractedInfo` - Structured Information Extraction
-Tasks, decisions, deadlines, and important information extracted from messages via AI.
+**NOTE:** extractedInfo and memories tables REMOVED (Phase 03 refactor) - mem0 OSS manages own tables internally.
 
-| Column | Type | Constraints | Purpose |
-|--------|------|-----------|---------|
-| `id` | UUID | PK, Default: Random | Unique record ID |
-| `messageId` | UUID | FK → messages.id ON DELETE CASCADE | Source message |
-| `groupId` | UUID | FK → groups.id ON DELETE CASCADE | Associated group |
-| `infoType` | info_type | NOT NULL | Type: task/decision/deadline/important/general |
-| `content` | text | NOT NULL | Full extracted content |
-| `summary` | text | Optional | Short summary (e.g., task title) |
-| `assigneeUserId` | UUID | FK → users.id | Assigned user (optional) |
-| `dueDate` | timestamp | Optional | Deadline (for tasks/deadlines) |
-| `status` | varchar(50) | Default: 'active' | Status: active/completed/archived |
-| `embedding` | vector(1536) | Optional | Gemini embedding for semantic search |
-| `createdAt` | timestamp | Default: NOW() | Extraction timestamp |
-| `updatedAt` | timestamp | Default: NOW() | Last update timestamp |
-| `metadata` | jsonb | Default: {} | Additional context |
-
-**Indexes:**
-- `idx_extracted_info_type` on `(infoType)` - Filter by type
-- `idx_extracted_info_group_created` on `(groupId, createdAt)` - Time-based queries
-- `idx_extracted_info_assignee` on `(assigneeUserId)` - Assigned tasks
-- `idx_extracted_info_status` on `(status)` - Status filtering
-
-**Vector Search:** Supports 1536-dimensional semantic similarity queries via pgvector
-
-#### 5. `memories` - Long-term Memory Storage
-Persistent facts, preferences, and context for mem0 and direct vector storage.
-
-| Column | Type | Constraints | Purpose |
-|--------|------|-----------|---------|
-| `id` | UUID | PK, Default: Random | Unique memory ID |
-| `userId` | varchar(255) | Optional | mem0 user context |
-| `agentId` | varchar(255) | Optional | mem0 agent context |
-| `groupId` | UUID | FK → groups.id | Associated group |
-| `content` | text | NOT NULL | Memory content |
-| `embedding` | vector(1536) | Optional | Gemini embedding |
-| `memoryType` | varchar(50) | Optional | Type: fact/preference/context |
-| `createdAt` | timestamp | Default: NOW() | Record creation time |
-| `updatedAt` | timestamp | Default: NOW() | Last update time |
-| `metadata` | jsonb | Default: {} | Additional data |
-
-**Indexes:**
-- `idx_memories_user` on `(userId)` - User memory retrieval
-- `idx_memories_group` on `(groupId)` - Group memory retrieval
-- `idx_memories_type` on `(memoryType)` - Memory type filtering
-
-**Vector Search:** Supports semantic similarity search for memory retrieval
-
-#### 6. `queryLogs` - Analytics & Debugging
+#### 4. `queryLogs` - Analytics & Debugging
 Complete query history for performance monitoring and debugging.
 
 | Column | Type | Constraints | Purpose |
@@ -180,20 +131,16 @@ Complete query history for performance monitoring and debugging.
 
 **Relationships:** Analytics table, no cascade deletes
 
-### Relational Diagram
+### Relational Diagram (Simplified)
 
 ```
 groups (1) ──── (M) users
   │
   ├─── (M) messages ──── (1) users
-  │         │
-  │         └─── (M) extractedInfo
-  │
-  ├─── (M) extractedInfo ──── (1) users (assignee)
-  │
-  ├─── (M) memories
   │
   └─── (M) queryLogs ──── (1) users
+
+NOTE: extractedInfo & memories removed → managed by mem0 OSS
 ```
 
 ## Database Client (`packages/db/src/client.ts`)
@@ -228,7 +175,7 @@ max: 20
 
 ## CRUD Operations (`packages/db/src/operations.ts`)
 
-### 14 Core Operations
+### 7 Core Operations (Simplified after Phase 03 refactor)
 
 #### Group Operations
 1. **`upsertGroup(data)`** - Insert or update group by platform + platformGroupId
@@ -242,57 +189,25 @@ max: 20
 5. **`saveMessage(data)`** - Save message with duplicate prevention
 6. **`getRecentMessages(groupId, limit)`** - Get last N messages with sender info
 
-#### Extracted Info Operations
-7. **`saveExtractedInfo(data)`** - Save extracted task/decision/deadline
-8. **`getExtractedInfoByGroup(groupId, options)`** - Retrieve by group with optional filtering
-
-#### Memory Operations
-9. **`saveMemory(data)`** - Store memory fact/preference/context
-10. **`getRecentMemories(groupId, limit)`** - Retrieve recent memories
-
 #### Query Log Operations
-11. **`saveQueryLog(data)`** - Log user query for analytics
+7. **`saveQueryLog(data)`** - Log user query for analytics
 
-#### Vector Search Operations
-12. **`searchByVector(embedding, options)`** - Semantic search in extractedInfo
-    - Validates 1536D embeddings
-    - Filters by group, type, similarity threshold
-    - Returns ranked results with similarity scores
+**REMOVED (Phase 03 refactor - mem0 handles):**
+- saveExtractedInfo, getExtractedInfoByGroup
+- saveMemory, getRecentMemories
+- searchByVector, searchMemories
+- getGroupStats
 
-13. **`searchMemories(embedding, options)`** - Semantic search in memories
-    - Validates 1536D embeddings
-    - Filters by group
-    - Returns ranked results
-
-#### Analytics
-14. **`getGroupStats(groupId)`** - Aggregate group statistics
-    - Total messages
-    - Task/decision/deadline counts
-    - Total memories
-
-### Embedding Validation
-
-All vector operations enforce:
-- **Dimension:** Exactly 1536 (Gemini embedding-001)
-- **Type:** Array of numbers
-- **NaN Check:** All elements must be valid numbers
-- **Error Handling:** Throws descriptive errors on validation failure
-
-### SQL Safety
-
-Vector search operations use:
-- Parameterized queries to prevent SQL injection
-- Safe embedding conversion to PostgreSQL array format
-- PostgreSQL distance operator `<=>` for cosine similarity
+**Memory Operations:** Now handled by mem0 OSS (see `@travis/core/memory`)
 
 ## Package Exports (`packages/db/src/index.ts`)
 
 All exports re-exported from:
 - `client.ts` - Database instance and connection functions
 - `schema.ts` - TypeScript types and table definitions
-- `operations.ts` - 14 CRUD and search operations
+- `operations.ts` - 7 CRUD operations (simplified)
 
-## Data Types
+## Data Types (Phase 03 Refactored)
 
 ### TypeScript Inferred Types
 
@@ -306,54 +221,48 @@ type NewUser = typeof users.$inferInsert;
 type Message = typeof messages.$inferSelect;
 type NewMessage = typeof messages.$inferInsert;
 
-type ExtractedInfo = typeof extractedInfo.$inferSelect;
-type NewExtractedInfo = typeof extractedInfo.$inferInsert;
-
-type Memory = typeof memories.$inferSelect;
-type NewMemory = typeof memories.$inferInsert;
-
 type QueryLog = typeof queryLogs.$inferSelect;
 type NewQueryLog = typeof queryLogs.$inferInsert;
 ```
 
+**REMOVED:** ExtractedInfo, NewExtractedInfo, Memory, NewMemory (mem0 manages internally)
+
 All types are fully type-safe with Drizzle ORM inference.
 
-## Vector Search Implementation
+## Vector Search Implementation (Phase 03 Refactored)
 
-### Embeddings Specification
-- **Model:** Gemini embedding-001
-- **Dimension:** 1536
-- **Distance Metric:** Cosine similarity (PostgreSQL `<=>` operator)
-- **Similarity Range:** 0.0 (dissimilar) to 1.0 (identical)
+**NOTE:** Vector search delegated to mem0 OSS (no custom implementation)
 
-### Search Operations
+### mem0 Vector Search
+- **Embeddings:** Gemini embedding-001 (1536D, NOT 768D)
+- **Storage:** PostgreSQL + pgvector (managed by mem0)
+- **Distance Metric:** Cosine similarity
+- **Deduplication:** Automatic via mem0
 
-#### extractedInfo Vector Search
+### Memory Operations (via `@travis/core/memory`)
+
 ```typescript
-searchByVector(embedding, {
-  groupId?: string;      // Optional group filter
-  type?: InfoType;       // Optional type filter (task/decision/deadline/etc)
-  limit?: number;        // Default: 10
-  minSimilarity?: number; // Default: 0.5
-})
+// Add memory (with auto extraction & deduplication)
+await addMemory({
+  userId,
+  groupId,
+  message,
+  senderName?,
+  groupName?
+});
+
+// Search memories
+const results = await searchMemories({
+  userId,
+  groupId,
+  query,
+  limit: 5
+});
+
+// Returns: MemoryItem[] with id, memory, score, metadata
 ```
 
-Returns: `id`, `type`, `content`, `summary`, `dueDate`, `similarity` score
-
-#### memories Vector Search
-```typescript
-searchMemories(embedding, {
-  groupId?: string;      // Optional group filter
-  limit?: number;        // Default: 10
-})
-```
-
-Returns: `id`, `content`, `type`, `similarity` score
-
-### Performance Considerations
-- pgvector supports HNSW indexing (future optimization)
-- Current implementation uses sequential scan
-- Add vector index when similarity queries become bottleneck: `CREATE INDEX ON extracted_info USING hnsw (embedding vector_cosine_ops)`
+**All vector operations handled by mem0 internally - no manual embedding/search logic needed.**
 
 ## Integration Points
 
@@ -536,18 +445,18 @@ Request (task + prompt)
 
 | Metric | Value |
 |--------|-------|
-| **Database Tables** | 6 |
-| **Enums** | 2 |
-| **Database Indexes** | 9 |
-| **CRUD Operations** | 14 |
-| **Vector-enabled Tables** | 2 |
-| **Embedding Dimension** | 1536 |
+| **Database Tables** | 4 (extractedInfo + memories removed) |
+| **Enums** | 1 (info_type removed) |
+| **CRUD Operations** | 7 (simplified, mem0 handles memory) |
+| **Embedding Dimension** | 1536 (mem0 embedding-001) |
 | **Max Pool Connections** | 20 (prod) / 1 (dev) |
 | **LLM Task Types** | 5 |
 | **System Prompts** | 5 |
-| **Test Suites** | 4 |
+| **Test Suites** | 4 (LLM layer) |
 | **Test Coverage** | 33/33 PASS (100%) |
+| **Code Reduction (Phase 03)** | 70% (~500 lines → ~150 lines) |
 
 ---
 
+*Phase 03 REFACTORED: mem0 OSS self-hosted with 70% code reduction, Gemini 2.5-flash-lite LLM + embedding-001 (1536D)*
 *Phase 04 complete: LLM layer integrated with task routing, fallback mechanism, Vietnamese prompts, streaming support, and 33/33 tests passing.*
