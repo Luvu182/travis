@@ -23,7 +23,7 @@ export async function generate(options: GenerateOptions): Promise<string> {
     system: options.system,
     prompt: options.prompt,
     temperature: options.temperature ?? 0.7,
-    maxTokens: options.maxTokens ?? 2048,
+    maxOutputTokens: options.maxTokens ?? 2048,
   });
 
   return text;
@@ -42,7 +42,7 @@ export async function* stream(
     system: options.system,
     prompt: options.prompt,
     temperature: options.temperature ?? 0.7,
-    maxTokens: options.maxTokens ?? 2048,
+    maxOutputTokens: options.maxTokens ?? 2048,
   });
 
   for await (const chunk of result.textStream) {

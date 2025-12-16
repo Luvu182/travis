@@ -3,10 +3,12 @@ import { searchMemories, type MemoryItem } from './mem0-client.js';
 /**
  * Search for relevant memories
  * Returns array of memory objects with id, memory text, and metadata
+ * Multi-tenant scoping via workspaceId
  */
 export async function searchRelevantMemories(params: {
   userId: string;
   groupId: string;
+  workspaceId?: string;
   query: string;
   limit?: number;
 }): Promise<MemoryItem[]> {

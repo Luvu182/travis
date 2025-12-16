@@ -23,7 +23,7 @@ export async function generate(options: GenerateOptions): Promise<string> {
     system: options.system,
     prompt: options.prompt,
     temperature: options.temperature ?? 0.7,
-    maxTokens: options.maxTokens ?? 2048,
+    maxOutputTokens: options.maxTokens ?? 2048,
   });
 
   return text;
@@ -42,7 +42,7 @@ export async function* stream(
     system: options.system,
     prompt: options.prompt,
     temperature: options.temperature ?? 0.7,
-    maxTokens: options.maxTokens ?? 2048,
+    maxOutputTokens: options.maxTokens ?? 2048,
   });
 
   for await (const chunk of result.textStream) {
@@ -65,7 +65,7 @@ export async function generateStructured<T>(
     system: `${options.system}\n\nRespond ONLY with valid JSON matching this schema: ${JSON.stringify(schema)}`,
     prompt: options.prompt,
     temperature: 0.1, // Low temp for structured
-    maxTokens: options.maxTokens ?? 2048,
+    maxOutputTokens: options.maxTokens ?? 2048,
   });
 
   return JSON.parse(text) as T;

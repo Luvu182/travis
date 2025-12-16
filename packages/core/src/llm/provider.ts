@@ -1,6 +1,6 @@
 import { google } from '@ai-sdk/google';
 import { openai } from '@ai-sdk/openai';
-import type { LanguageModelV1 } from 'ai';
+import type { LanguageModel } from 'ai';
 
 // Infer model types from the factory functions
 type GeminiModel = ReturnType<typeof google>;

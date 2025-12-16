@@ -61,21 +61,28 @@ async function memoryRequest<T>(
 /**
  * Add memory from conversation message
  * Includes timestamp in metadata so LLM can understand relative dates in context
+ *
+ * Multi-tenant scoping:
+ * - workspaceId: isolates memories between workspaces (primary tenant boundary)
+ * - groupId: context within workspace
+ * - userId: individual user within group
  */
 export async function addMemory(params: {
   userId: string;
   groupId: string;
+  workspaceId?: string;
   message: string;
   senderName?: string;
   groupName?: string;
   sentAt?: Date;
   metadata?: Record<string, unknown>;
 }): Promise<void> {
-  const { userId, groupId, message, senderName, groupName, sentAt } = params;
+  const { userId, groupId, workspaceId, message, senderName, groupName, sentAt } = params;
 
   const response = await memoryRequest<MemoryResponse>('/memories/add', 'POST', {
     user_id: userId,
     group_id: groupId,
+    workspace_id: workspaceId,
     message,
     sender_name: senderName,
     group_name: groupName,
@@ -89,18 +96,21 @@ export async function addMemory(params: {
 
 /**
  * Retrieve relevant memories for query
+ * Multi-tenant scoping via workspaceId
  */
 export async function searchMemories(params: {
   userId: string;
   groupId: string;
+  workspaceId?: string;
   query: string;
   limit?: number;
 }): Promise<MemoryItem[]> {
-  const { userId, groupId, query, limit = 5 } = params;
+  const { userId, groupId, workspaceId, query, limit = 5 } = params;
 
   const response = await memoryRequest<MemoryResponse>('/memories/search', 'POST', {
     user_id: userId,
     group_id: groupId,
+    workspace_id: workspaceId,
     query,
     limit,
   });
@@ -115,17 +125,20 @@ export async function searchMemories(params: {
 
 /**
  * Get all memories for a user/group
+ * Multi-tenant scoping via workspaceId
  */
 export async function getAllMemories(params: {
   userId: string;
   groupId: string;
+  workspaceId?: string;
   limit?: number;
 }): Promise<MemoryItem[]> {
-  const { userId, groupId, limit = 10 } = params;
+  const { userId, groupId, workspaceId, limit = 10 } = params;
 
   const response = await memoryRequest<MemoryResponse>('/memories/all', 'POST', {
     user_id: userId,
     group_id: groupId,
+    workspace_id: workspaceId,
     limit,
   });
 
@@ -189,16 +202,19 @@ export async function getMemoryHistory(
 
 /**
  * Delete all memories for a user/group
+ * Multi-tenant scoping via workspaceId
  */
 export async function deleteAllMemories(params: {
   userId: string;
   groupId: string;
+  workspaceId?: string;
 }): Promise<void> {
-  const { userId, groupId } = params;
+  const { userId, groupId, workspaceId } = params;
 
   const response = await memoryRequest<MemoryResponse>('/memories/delete-all', 'POST', {
     user_id: userId,
     group_id: groupId,
+    workspace_id: workspaceId,
   });
 
   if (!response.success) {

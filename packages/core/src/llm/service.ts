@@ -32,7 +32,7 @@ export async function generate(request: LLMRequest): Promise<LLMResponse> {
       system: request.system,
       prompt: request.prompt,
       temperature: request.temperature ?? 0.7,
-      maxTokens: request.maxTokens ?? 2048,
+      maxOutputTokens: request.maxTokens ?? 2048,
     });
 
     return {
@@ -51,7 +51,7 @@ export async function generate(request: LLMRequest): Promise<LLMResponse> {
       system: request.system,
       prompt: request.prompt,
       temperature: request.temperature ?? 0.7,
-      maxTokens: request.maxTokens ?? 2048,
+      maxOutputTokens: request.maxTokens ?? 2048,
     });
 
     return {
@@ -79,7 +79,7 @@ export async function* stream(
       system: request.system,
       prompt: request.prompt,
       temperature: request.temperature ?? 0.7,
-      maxTokens: request.maxTokens ?? 2048,
+      maxOutputTokens: request.maxTokens ?? 2048,
     });
 
     for await (const chunk of result.textStream) {
@@ -94,7 +94,7 @@ export async function* stream(
       system: request.system,
       prompt: request.prompt,
       temperature: request.temperature ?? 0.7,
-      maxTokens: request.maxTokens ?? 2048,
+      maxOutputTokens: request.maxTokens ?? 2048,
     });
 
     for await (const chunk of result.textStream) {
