@@ -2,6 +2,7 @@
 
 import { Card } from './card';
 import { Icon, type IconName } from './icon';
+import { cn } from '@/lib/utils';
 
 interface StatCardProps {
   label: string;
@@ -24,7 +25,7 @@ export function StatCard({
   className = '',
 }: StatCardProps) {
   return (
-    <Card variant="default" className={`group ${className}`}>
+    <Card variant="default" className={cn('group', className)}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-neutral-500 mb-1">
@@ -40,9 +41,10 @@ export function StatCard({
           </div>
           {change && (
             <div
-              className={`flex items-center gap-1 mt-2 text-sm ${
+              className={cn(
+                'flex items-center gap-1 mt-2 text-sm',
                 change.type === 'increase' ? 'text-emerald-600' : 'text-red-600'
-              }`}
+              )}
             >
               <Icon
                 name={change.type === 'increase' ? 'chevron-up' : 'chevron-down'}
@@ -54,11 +56,13 @@ export function StatCard({
           )}
         </div>
         {icon && (
-          <Icon
-            name={icon}
-            size="md"
-            className="text-neutral-400 group-hover:text-primary-500 transition-colors"
-          />
+          <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+            <Icon
+              name={icon}
+              size="sm"
+              className="text-primary-600"
+            />
+          </div>
         )}
       </div>
     </Card>

@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Settings, Trash2, Bot, User, Plus, MessageSquare, ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { Send, Bot, User, RefreshCw } from 'lucide-react';
+import { Button, Card, Badge, Icon } from '@/components/ui';
 import { TypingIndicator } from '@/components/ui/typing-indicator';
 
 interface Message {
@@ -14,10 +12,11 @@ interface Message {
   createdAt: string;
 }
 
-interface Conversation {
+interface Memory {
   id: string;
-  title: string;
-  updatedAt: string;
+  memory: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ChatSettings {
@@ -30,19 +29,63 @@ const DEFAULT_SETTINGS: ChatSettings = {
   useMemory: true,
 };
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 export default function ChatPage() {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [settings, setSettings] = useState<ChatSettings>(DEFAULT_SETTINGS);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
-  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [memories, setMemories] = useState<Memory[]>([]);
+  const [isLoadingMemories, setIsLoadingMemories] = useState(false);
+  const [showMemories, setShowMemories] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Web user ID (generate or load from localStorage)
+  const getUserId = useCallback(() => {
+    let id = localStorage.getItem('web-user-id');
+    if (!id) {
+      id = `web-${crypto.randomUUID()}`;
+      localStorage.setItem('web-user-id', id);
+    }
+    return id;
+  }, []);
+
+  // Fetch memories from API
+  const fetchMemories = useCallback(async () => {
+    setIsLoadingMemories(true);
+    try {
+      const userId = getUserId();
+      const res = await fetch(`${API_URL}/search/all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          groupId: 'web-dashboard',
+          limit: 20,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data?.results) {
+          // Sort by updated_at descending (newest first)
+          const sorted = [...data.data.results].sort((a, b) =>
+            new Date(b.updated_at || b.created_at).getTime() -
+            new Date(a.updated_at || a.created_at).getTime()
+          );
+          setMemories(sorted);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch memories:', error);
+    } finally {
+      setIsLoadingMemories(false);
+    }
+  }, [getUserId]);
 
   // Load settings from localStorage
   useEffect(() => {
@@ -54,53 +97,22 @@ export default function ChatPage() {
         // Ignore invalid JSON
       }
     }
-  }, []);
-
-  // Load conversations on mount
-  const loadConversations = useCallback(async () => {
-    try {
-      const res = await fetch('/api/chat');
-      if (res.ok) {
-        const data = await res.json();
-        setConversations(data.conversations || []);
-      }
-    } catch (error) {
-      console.error('Failed to load conversations:', error);
-    } finally {
-      setLoadingConversations(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadConversations();
-  }, [loadConversations]);
-
-  // Load messages when conversation changes
-  useEffect(() => {
-    if (!currentConversationId) {
-      setMessages([]);
-      return;
-    }
-
-    const loadMessages = async () => {
-      try {
-        const res = await fetch(`/api/chat/${currentConversationId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setMessages(data.messages || []);
-        }
-      } catch (error) {
-        console.error('Failed to load messages:', error);
-      }
-    };
-
-    loadMessages();
-  }, [currentConversationId]);
+    // Initial fetch of memories
+    fetchMemories();
+  }, [fetchMemories]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
+    }
+  }, [input]);
 
   // Build context from recent messages
   const buildContext = () => {
@@ -133,7 +145,7 @@ export default function ChatPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage.content,
-          conversationId: currentConversationId,
+          conversationId,
           context,
           useMemory: settings.useMemory,
         }),
@@ -141,11 +153,8 @@ export default function ChatPage() {
 
       const data = await response.json();
 
-      // Update current conversation ID if new conversation was created
-      if (data.conversationId && !currentConversationId) {
-        setCurrentConversationId(data.conversationId);
-        // Refresh conversations list
-        loadConversations();
+      if (data.conversationId && !conversationId) {
+        setConversationId(data.conversationId);
       }
 
       const assistantMessage: Message = {
@@ -156,6 +165,9 @@ export default function ChatPage() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Refresh memories after each message (with delay for mem0 to process)
+      setTimeout(() => fetchMemories(), 1500);
     } catch (error) {
       console.error('Chat error:', error);
       const errorMessage: Message = {
@@ -168,33 +180,6 @@ export default function ChatPage() {
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
-    }
-  };
-
-  const startNewChat = () => {
-    setCurrentConversationId(null);
-    setMessages([]);
-  };
-
-  const selectConversation = (id: string) => {
-    setCurrentConversationId(id);
-  };
-
-  const deleteConversation = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm('Xóa cuộc trò chuyện này?')) return;
-
-    try {
-      const res = await fetch(`/api/chat/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setConversations(prev => prev.filter(c => c.id !== id));
-        if (currentConversationId === id) {
-          setCurrentConversationId(null);
-          setMessages([]);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to delete conversation:', error);
     }
   };
 
@@ -212,222 +197,195 @@ export default function ChatPage() {
     });
   };
 
-  const formatDate = (dateString: string) => {
+  const formatMemoryDate = (dateString: string) => {
     const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) return 'Hôm nay';
-    if (days === 1) return 'Hôm qua';
-    if (days < 7) return `${days} ngày trước`;
-    return date.toLocaleDateString('vi-VN');
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }) + ' · ' + date.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-neutral-50 dark:bg-neutral-950">
-      {/* Sidebar - Conversations List */}
-      {showSidebar && (
-        <div className="w-64 border-r border-neutral-200 dark:border-neutral-800 flex flex-col bg-white dark:bg-neutral-900">
-          <div className="p-3 border-b border-neutral-200 dark:border-neutral-800">
-            <Button
-              onClick={startNewChat}
-              className="w-full bg-primary-600 hover:bg-primary-700 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Cuộc trò chuyện mới
-            </Button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
-            {loadingConversations ? (
-              <div className="p-4 text-center text-neutral-500 dark:text-neutral-400">Đang tải...</div>
-            ) : conversations.length === 0 ? (
-              <div className="p-4 text-center text-neutral-500 dark:text-neutral-400 text-sm">
-                Chưa có cuộc trò chuyện nào
+    <div className="flex h-full bg-white">
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
+          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-primary-500/25">
+                  <Bot className="w-10 h-10 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold text-neutral-900 mb-2">Xin chào! Tôi là Jarvis.</h1>
+                <p className="text-neutral-500 text-center max-w-md">
+                  Tôi là trợ lý AI với khả năng ghi nhớ dài hạn. Hãy hỏi tôi bất cứ điều gì!
+                </p>
+                <div className="flex flex-wrap gap-2 mt-6 justify-center">
+                  <Badge variant="default" size="sm">
+                    <Icon name="brain" size="xs" className="mr-1" />
+                    Long-term Memory
+                  </Badge>
+                  <Badge variant="default" size="sm">
+                    <Icon name="lightning" size="xs" className="mr-1" />
+                    Gemini Flash
+                  </Badge>
+                  <Badge variant="default" size="sm">
+                    <Icon name="sparkles" size="xs" className="mr-1" />
+                    Vietnamese
+                  </Badge>
+                </div>
               </div>
             ) : (
-              <div className="p-2 space-y-1">
-                {conversations.map((conv) => (
-                  <div
-                    key={conv.id}
-                    onClick={() => selectConversation(conv.id)}
-                    className={`group flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 ${
-                      currentConversationId === conv.id
-                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                        : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
-                    }`}
-                  >
-                    <MessageSquare className="w-4 h-4 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate">{conv.title}</p>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{formatDate(conv.updatedAt)}</p>
+              messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {message.role === 'assistant' && (
+                    <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/25">
+                      <Bot className="w-5 h-5 text-white" />
                     </div>
-                    <button
-                      onClick={(e) => deleteConversation(conv.id, e)}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-neutral-400 hover:text-red-500 transition-opacity"
+                  )}
+                  <div className={`max-w-[75%] ${message.role === 'user' ? 'order-first' : ''}`}>
+                    <Card
+                      variant="default"
+                      padding="md"
+                      className={
+                        message.role === 'user'
+                          ? 'bg-primary-600 text-white border-transparent'
+                          : 'bg-white text-neutral-900 border-neutral-200'
+                      }
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                    </Card>
+                    <p className={`text-xs mt-1.5 px-1 ${
+                      message.role === 'user' ? 'text-right text-neutral-400' : 'text-neutral-400'
+                    }`}>
+                      {formatTime(message.createdAt)}
+                    </p>
                   </div>
-                ))}
+                  {message.role === 'user' && (
+                    <div className="shrink-0 w-10 h-10 rounded-xl bg-neutral-200 flex items-center justify-center">
+                      <User className="w-5 h-5 text-neutral-600" />
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+            {isLoading && (
+              <div className="flex gap-4 justify-start">
+                <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/25">
+                  <Bot className="w-5 h-5 text-white" />
+                </div>
+                <Card variant="default" padding="md" className="bg-white border-neutral-200">
+                  <TypingIndicator />
+                </Card>
               </div>
             )}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* Input Area */}
+        <div className="shrink-0 bg-white px-4 py-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex gap-3 items-center">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter để xuống dòng)"
+                rows={1}
+                className="flex-1 resize-none px-4 py-3 border border-neutral-200 rounded-2xl bg-neutral-50 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:bg-white transition-all scrollbar-hide overflow-hidden"
+                style={{ minHeight: '48px', maxHeight: '120px' }}
+              />
+              <Button
+                onClick={sendMessage}
+                disabled={!input.trim() || isLoading}
+                variant="primary"
+                className="h-12 w-12 rounded-xl p-0 shrink-0 flex items-center justify-center"
+              >
+                <Send className="w-5 h-5" />
+              </Button>
+            </div>
+            <p className="text-xs text-neutral-400 mt-2 text-center">
+              Jarvis có thể mắc lỗi. Hãy kiểm tra các thông tin quan trọng.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Memories Sidebar */}
+      {showMemories && (
+        <div className="w-72 border-l border-neutral-200 bg-neutral-50 flex flex-col shrink-0">
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-neutral-200 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon name="brain" size="sm" className="text-primary-600" />
+              <span className="font-semibold text-neutral-900">Memories</span>
+            </div>
+            <button
+              onClick={fetchMemories}
+              disabled={isLoadingMemories}
+              className="p-1.5 hover:bg-neutral-200 rounded-lg transition-colors text-neutral-500 hover:text-neutral-700"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoadingMemories ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+
+          {/* Memories List */}
+          <div className="flex-1 overflow-y-auto scrollbar-hide p-3 space-y-3">
+            {memories.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 rounded-xl bg-neutral-200 flex items-center justify-center mx-auto mb-3">
+                  <Icon name="brain" size="md" className="text-neutral-400" />
+                </div>
+                <p className="text-sm text-neutral-500">Chưa có memories</p>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Chat để tạo memories mới
+                </p>
+              </div>
+            ) : (
+              memories.map((memory) => (
+                <div
+                  key={memory.id}
+                  className="p-3 bg-white rounded-xl border border-neutral-200 hover:border-neutral-300 transition-colors"
+                >
+                  <p className="text-sm text-neutral-800 leading-relaxed">
+                    {memory.memory}
+                  </p>
+                  <p className="text-xs text-neutral-400 mt-2">
+                    {formatMemoryDate(memory.updated_at || memory.created_at)}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-4 py-3 border-t border-neutral-200">
+            <p className="text-xs text-neutral-400 text-center">
+              {memories.length} memories
+            </p>
           </div>
         </div>
       )}
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-            >
-              <ChevronLeft className={`w-5 h-5 transition-transform ${showSidebar ? '' : 'rotate-180'}`} />
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
-                <Bot className="w-4 h-4 text-white" />
-              </div>
-              <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-                Chat với Jarvis
-              </h1>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className={`p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors ${
-              showSettings ? 'text-primary-500' : 'text-neutral-500'
-            }`}
-            title="Cài đặt"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Settings Panel */}
-        {showSettings && (
-          <div className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800">
-            <div className="flex flex-wrap gap-6">
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-neutral-600 dark:text-neutral-400">
-                  Số tin nhắn context:
-                </label>
-                <select
-                  value={settings.contextLength}
-                  onChange={(e) => {
-                    const newSettings = { ...settings, contextLength: Number(e.target.value) };
-                    setSettings(newSettings);
-                    localStorage.setItem('chat-settings', JSON.stringify(newSettings));
-                  }}
-                  className="px-3 py-1.5 text-sm border border-neutral-200 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                >
-                  {[5, 10, 15, 20, 30, 50].map(n => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-neutral-600 dark:text-neutral-400">
-                  Sử dụng Memory:
-                </label>
-                <input
-                  type="checkbox"
-                  checked={settings.useMemory}
-                  onChange={(e) => {
-                    const newSettings = { ...settings, useMemory: e.target.checked };
-                    setSettings(newSettings);
-                    localStorage.setItem('chat-settings', JSON.stringify(newSettings));
-                  }}
-                  className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-neutral-500 dark:text-neutral-400">
-              <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary-500/25">
-                <Bot className="w-10 h-10 text-white" />
-              </div>
-              <p className="text-lg font-medium text-neutral-700 dark:text-neutral-300">Xin chào! Tôi là Jarvis.</p>
-              <p className="text-sm mt-2">Hãy gửi tin nhắn để bắt đầu trò chuyện.</p>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {message.role === 'assistant' && (
-                  <div className="shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-md">
-                    <Bot className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                <Card
-                  className={`max-w-[70%] px-4 py-3 ${
-                    message.role === 'user'
-                      ? 'bg-primary-600 text-white border-transparent'
-                      : 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 border-neutral-200 dark:border-neutral-700'
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                  <p className={`text-xs mt-2 ${
-                    message.role === 'user' ? 'text-primary-200' : 'text-neutral-500 dark:text-neutral-400'
-                  }`}>
-                    {formatTime(message.createdAt)}
-                  </p>
-                </Card>
-                {message.role === 'user' && (
-                  <div className="shrink-0 w-8 h-8 rounded-lg bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
-                    <User className="w-4 h-4 text-neutral-600 dark:text-neutral-300" />
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-          {isLoading && (
-            <div className="flex gap-3 justify-start">
-              <div className="shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-md">
-                <Bot className="w-4 h-4 text-white" />
-              </div>
-              <Card className="px-4 py-3 bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
-                <TypingIndicator />
-              </Card>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-          <div className="flex gap-3 items-end">
-            <Textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => handleKeyDown(e)}
-              placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter để xuống dòng)"
-              rows={1}
-              className="flex-1 resize-none"
-              style={{ maxHeight: '120px' }}
-            />
-            <Button
-              onClick={sendMessage}
-              disabled={!input.trim() || isLoading}
-              className="p-3 bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50"
-            >
-              <Send className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Toggle Memories Button (when hidden) */}
+      {!showMemories && (
+        <button
+          onClick={() => setShowMemories(true)}
+          className="fixed right-4 top-1/2 -translate-y-1/2 p-2 bg-white border border-neutral-200 rounded-lg shadow-sm hover:bg-neutral-50 transition-colors"
+        >
+          <Icon name="brain" size="sm" className="text-primary-600" />
+        </button>
+      )}
     </div>
   );
 }

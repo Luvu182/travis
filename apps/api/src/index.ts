@@ -31,6 +31,7 @@ import { metricsRoutes } from './routes/metrics.js';
 import { authRoutes } from './routes/auth.js';
 import { dashboardMetricsRoutes } from './routes/dashboard-metrics.js';
 import { workspaceRoutes } from './routes/workspaces.js';
+import { webChatRoutes } from './routes/web-chat.js';
 import { telegramWebhook } from './webhooks/telegram.js';
 import { larkWebhook } from './webhooks/lark.js';
 import { errorHandler } from './middleware/error.js';
@@ -62,6 +63,9 @@ app.route('/api/chat', chatRoutes);
 app.route('/api/extract', extractRoutes);
 app.route('/api/search', searchRoutes);
 app.route('/api/query', queryRoutes);
+
+// Web chat route (for dashboard - different format from platform chat)
+app.route('/chat', webChatRoutes);
 
 // Webhook routes (no rate limiting - handled by platforms)
 app.route('/webhook/telegram', telegramWebhook);

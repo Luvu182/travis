@@ -239,7 +239,7 @@ async def add_memory(req: AddMemoryRequest, memory: Memory = Depends(get_memory)
 
         messages = [{"role": "user", "content": normalized_message}]
         metadata = {
-            "sender_name": req.sender_name,
+            "sender_name": req.sender_name,  # Human-readable name for attribution
             "group_name": req.group_name,
             "sent_at": req.sent_at or reference_date.isoformat(),
             "original_message": req.message,
@@ -271,14 +271,19 @@ async def add_memory(req: AddMemoryRequest, memory: Memory = Depends(get_memory)
 
 @app.post("/memories/search", response_model=MemoryResponse)
 async def search_memories(req: SearchMemoryRequest, memory: Memory = Depends(get_memory)):
-    """Search memories by query with multi-tenant scoping."""
+    """
+    Search memories by query with multi-tenant scoping.
+
+    NOTE: user_id is NOT used for filtering - we search ALL memories in the group/workspace.
+    This allows group members to access shared information (e.g., meeting times announced by others).
+    user_id is only used when ADDING memories to track who said what.
+    """
     try:
-        # Multi-tenant scoping (same as add)
+        # Multi-tenant scoping - NO user_id filter (shared memory within group)
         agent_id = f"workspace_{req.workspace_id}" if req.workspace_id else f"group_{req.group_id}"
         run_id = f"group_{req.group_id}" if req.workspace_id else None
 
         search_kwargs = {
-            "user_id": req.user_id,
             "agent_id": agent_id,
             "limit": req.limit,
         }
@@ -293,14 +298,18 @@ async def search_memories(req: SearchMemoryRequest, memory: Memory = Depends(get
 
 @app.post("/memories/all", response_model=MemoryResponse)
 async def get_all_memories(req: GetAllMemoriesRequest, memory: Memory = Depends(get_memory)):
-    """Get all memories for a user/group with multi-tenant scoping."""
+    """
+    Get all memories for a group/workspace.
+
+    NOTE: user_id is NOT used for filtering - returns ALL memories in the group/workspace.
+    This enables shared memory access within teams.
+    """
     try:
-        # Multi-tenant scoping
+        # Multi-tenant scoping - NO user_id filter (shared memory within group)
         agent_id = f"workspace_{req.workspace_id}" if req.workspace_id else f"group_{req.group_id}"
         run_id = f"group_{req.group_id}" if req.workspace_id else None
 
         get_kwargs = {
-            "user_id": req.user_id,
             "agent_id": agent_id,
             "limit": req.limit,
         }
