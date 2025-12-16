@@ -1,7 +1,8 @@
-import { db } from './client.js';
-import { groups, users, messages, queryLogs, adminUsers, refreshTokens, metricsHistory } from './schema.js';
+import { db } from './client';
+import { groups, users, messages, queryLogs, adminUsers, refreshTokens, metricsHistory } from './schema';
 import { eq, and, desc, sql, isNull, gt, gte, lte, count, avg } from 'drizzle-orm';
-import type { NewGroup, NewUser, NewMessage, NewQueryLog } from './schema.js';
+import type { NewGroup, NewUser, NewMessage, NewQueryLog } from './schema';
+import { hashPassword, verifyPassword, validatePasswordStrength } from './auth-utils';
 
 // ==================== GROUP OPERATIONS ====================
 
@@ -161,7 +162,7 @@ export async function getAdminById(id: string) {
     .select({
       id: adminUsers.id,
       email: adminUsers.email,
-      displayName: adminUsers.displayName,
+      name: adminUsers.name,
       role: adminUsers.role,
       isActive: adminUsers.isActive,
     })
@@ -180,21 +181,71 @@ export async function updateLastLogin(userId: string) {
 
 export async function createAdminUser(data: {
   email: string;
-  passwordHash: string;
-  displayName?: string;
-  role?: string;
-}) {
+  password: string;
+  name?: string;
+  role?: 'admin' | 'user';
+}): Promise<{ success: boolean; userId?: string; error?: string }> {
+  // Validate password
+  const validation = validatePasswordStrength(data.password);
+  if (!validation.valid) {
+    return { success: false, error: validation.message };
+  }
+
+  // Check existing user
+  const existing = await getAdminByEmail(data.email);
+  if (existing) {
+    return { success: false, error: 'Email already registered' };
+  }
+
+  // Hash and create
+  const passwordHash = await hashPassword(data.password);
   const result = await db
     .insert(adminUsers)
     .values({
       email: data.email.toLowerCase(),
-      passwordHash: data.passwordHash,
-      displayName: data.displayName,
-      role: data.role || 'admin',
+      passwordHash,
+      name: data.name,
+      role: data.role || 'user',
     })
-    .onConflictDoNothing()
-    .returning();
-  return result[0] || null;
+    .returning({ id: adminUsers.id });
+
+  return { success: true, userId: result[0]?.id };
+}
+
+export async function verifyAuthUser(
+  email: string,
+  password: string
+): Promise<{ id: string; email: string; name: string | null; role: 'admin' | 'user'; isActive: boolean } | null> {
+  const user = await db
+    .select({
+      id: adminUsers.id,
+      email: adminUsers.email,
+      name: adminUsers.name,
+      role: adminUsers.role,
+      passwordHash: adminUsers.passwordHash,
+      isActive: adminUsers.isActive,
+    })
+    .from(adminUsers)
+    .where(eq(adminUsers.email, email.toLowerCase()))
+    .limit(1);
+
+  if (!user[0]) return null;
+  if (!user[0].isActive) return null;
+  if (!user[0].passwordHash) return null; // No password set
+
+  const valid = await verifyPassword(password, user[0].passwordHash);
+  if (!valid) return null;
+
+  // Update last login
+  await updateLastLogin(user[0].id);
+
+  return {
+    id: user[0].id,
+    email: user[0].email,
+    name: user[0].name,
+    role: user[0].role,
+    isActive: user[0].isActive,
+  };
 }
 
 // ==================== REFRESH TOKEN OPERATIONS ====================

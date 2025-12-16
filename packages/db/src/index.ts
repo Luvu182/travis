@@ -1,3 +1,6 @@
-export * from './client.js';
-export * from './schema.js';
-export * from './operations.js';
+export * from './client';
+export * from './schema';
+export * from './operations';
+export * from './auth-utils';
+export { authAdapter } from './auth-adapter';
+export { authDb, authPool } from './auth-client';

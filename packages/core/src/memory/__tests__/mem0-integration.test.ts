@@ -6,6 +6,8 @@ import {
   getAllMemories,
   updateMemory,
   deleteMemory,
+  getMemoryHistory,
+  deleteAllMemories,
 } from '../mem0-client.js';
 
 describe('Mem0 Integration Tests', () => {
@@ -165,5 +167,51 @@ describe('Mem0 Integration Tests', () => {
     });
 
     assert.ok(results.length <= limit, `Should respect limit of ${limit}`);
+  });
+
+  test('should get memory history', async () => {
+    // First create a memory
+    await addMemory({
+      userId: testUserId,
+      groupId: testGroupId,
+      message: 'History test: Team meeting scheduled for Monday',
+    });
+
+    const memories = await getAllMemories({
+      userId: testUserId,
+      groupId: testGroupId,
+      limit: 1,
+    });
+
+    if (memories.length > 0) {
+      const history = await getMemoryHistory(memories[0].id);
+      assert.ok(Array.isArray(history), 'Should return history array');
+    }
+  });
+
+  test('should delete all memories for user/group', async () => {
+    // Create unique test data
+    const cleanupUserId = 'cleanup-test-user';
+    const cleanupGroupId = 'cleanup-test-group';
+
+    await addMemory({
+      userId: cleanupUserId,
+      groupId: cleanupGroupId,
+      message: 'Memory to be deleted in bulk',
+    });
+
+    // Delete all memories
+    await deleteAllMemories({
+      userId: cleanupUserId,
+      groupId: cleanupGroupId,
+    });
+
+    // Verify deletion
+    const remaining = await getAllMemories({
+      userId: cleanupUserId,
+      groupId: cleanupGroupId,
+    });
+
+    assert.strictEqual(remaining.length, 0, 'All memories should be deleted');
   });
 });

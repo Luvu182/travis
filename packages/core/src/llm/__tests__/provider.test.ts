@@ -5,7 +5,7 @@
 
 import { test } from 'node:test';
 import * as assert from 'node:assert';
-import { selectModel, getFallback, getModelName, models, type TaskType } from '../provider.js';
+import { selectModel, getFallback, getModelName, models, type TaskType, type SupportedModel } from '../provider.js';
 
 test('Provider - selectModel() routing', async (t) => {
   await t.test('routes chat task to Gemini Flash Lite', () => {
@@ -83,7 +83,8 @@ test('Provider - getModelName() display names', async (t) => {
   });
 
   await t.test('returns unknown for unrecognized model', () => {
-    const name = getModelName({ unknownModel: true });
+    // Type assertion needed for testing unknown model behavior
+    const name = getModelName({ unknownModel: true } as unknown as SupportedModel);
     assert.strictEqual(name, 'unknown', 'should return unknown for unrecognized model');
   });
 });

@@ -22,7 +22,7 @@ const tests = [
 ];
 
 async function runTest(testFile: string): Promise<TestResult> {
-  return new Promise((resolve) => {
+  return new Promise((resolvePromise) => {
     const testPath = resolve(__dirname, testFile);
     const startTime = Date.now();
 
@@ -33,24 +33,24 @@ async function runTest(testFile: string): Promise<TestResult> {
     });
 
     let output = '';
-    let error = '';
+    let errorOutput = '';
 
-    proc.stdout?.on('data', (data) => {
+    proc.stdout.on('data', (data: Buffer) => {
       output += data.toString();
     });
 
-    proc.stderr?.on('data', (data) => {
-      error += data.toString();
+    proc.stderr.on('data', (data: Buffer) => {
+      errorOutput += data.toString();
     });
 
-    proc.on('close', (code) => {
+    proc.on('close', (code: number | null) => {
       const duration = Date.now() - startTime;
 
-      resolve({
+      resolvePromise({
         name: testFile,
         status: code === 0 ? 'pass' : code === null ? 'skip' : 'fail',
         duration,
-        error: error || undefined
+        error: errorOutput || undefined
       });
     });
   });

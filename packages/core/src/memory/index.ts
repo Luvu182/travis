@@ -1,18 +1,19 @@
 // Mem0 client - core memory operations
 export {
-  memory,
   addMemory,
   searchMemories,
   getAllMemories,
   updateMemory,
   deleteMemory,
+  getMemoryHistory,
+  deleteAllMemories,
+  isMemoryEnabled,
+  getMemoryHealth,
   type MemoryItem,
+  type MemoryHistoryEntry,
 } from './mem0-client.js';
 
-// Simplified extractor (delegates to mem0)
-export { extractAndStore } from './extractor.js';
-
-// Simplified retriever (wraps mem0 search)
+// Retriever helpers (wraps mem0 search + formatting)
 export { searchRelevantMemories, formatMemoriesForPrompt } from './retriever.js';
 
 // Message storage (audit trail only, not for memory)

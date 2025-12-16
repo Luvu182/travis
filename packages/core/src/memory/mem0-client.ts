@@ -1,4 +1,7 @@
-import { Memory } from 'mem0ai/oss';
+/**
+ * Memory Client - HTTP client for Python mem0 service
+ * Calls the FastAPI memory service which uses mem0 Python SDK with pgvector
+ */
 import { env } from '@jarvis/config';
 
 // Type definitions for mem0 responses
@@ -11,45 +14,53 @@ export interface MemoryItem {
   updated_at?: string;
 }
 
-// Initialize mem0 with Gemini as LLM provider and PostgreSQL storage
-export const memory = new Memory({
-  version: 'v1.1',
-  llm: {
-    provider: 'google_ai',
-    config: {
-      apiKey: env.GEMINI_API_KEY,
-      model: 'gemini-2.5-flash-lite',
+// Type for memory history entries
+export interface MemoryHistoryEntry {
+  id: string;
+  memoryId: string;
+  previousValue?: string;
+  newValue?: string;
+  action: 'ADD' | 'UPDATE' | 'DELETE';
+  timestamp: string;
+}
+
+interface MemoryResponse {
+  success: boolean;
+  data?: unknown[];
+  error?: string;
+}
+
+// Memory service URL - configurable via env
+const MEMORY_SERVICE_URL = env.MEMORY_SERVICE_URL;
+
+/**
+ * Helper to make requests to memory service
+ */
+async function memoryRequest<T>(
+  endpoint: string,
+  method: 'GET' | 'POST' = 'POST',
+  body?: unknown
+): Promise<T> {
+  const url = `${MEMORY_SERVICE_URL}${endpoint}`;
+
+  const response = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
     },
-  },
-  embedder: {
-    provider: 'google_ai',
-    config: {
-      apiKey: env.GEMINI_API_KEY,
-      model: 'embedding-001', // 1536D embeddings
-    },
-  },
-  vectorStore: {
-    provider: 'pgvector',
-    config: {
-      host: env.DB_HOST,
-      port: parseInt(env.DB_PORT || '5432'),
-      user: env.DB_USER,
-      password: env.DB_PASSWORD,
-      database: env.DB_NAME,
-      collectionName: 'memories',
-      dimension: 1536, // embedding-001 is 1536D
-    },
-  },
-  historyStore: {
-    provider: 'sqlite',
-    config: {
-      historyDbPath: './memory_history.db',
-    },
-  },
-});
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Memory service error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json() as Promise<T>;
+}
 
 /**
  * Add memory from conversation message
+ * Includes timestamp in metadata so LLM can understand relative dates in context
  */
 export async function addMemory(params: {
   userId: string;
@@ -57,21 +68,23 @@ export async function addMemory(params: {
   message: string;
   senderName?: string;
   groupName?: string;
+  sentAt?: Date;
   metadata?: Record<string, unknown>;
 }): Promise<void> {
-  const { userId, groupId, message, senderName, groupName, metadata } = params;
+  const { userId, groupId, message, senderName, groupName, sentAt } = params;
 
-  const messages = [{ role: 'user' as const, content: message }];
-
-  await memory.add(messages, {
-    userId,
-    agentId: `group_${groupId}`,
-    metadata: {
-      senderName,
-      groupName,
-      ...metadata,
-    },
+  const response = await memoryRequest<MemoryResponse>('/memories/add', 'POST', {
+    user_id: userId,
+    group_id: groupId,
+    message,
+    sender_name: senderName,
+    group_name: groupName,
+    sent_at: sentAt?.toISOString(),
   });
+
+  if (!response.success) {
+    console.error('[Memory] Add failed:', response.error);
+  }
 }
 
 /**
@@ -85,14 +98,19 @@ export async function searchMemories(params: {
 }): Promise<MemoryItem[]> {
   const { userId, groupId, query, limit = 5 } = params;
 
-  const results = await memory.search(query, {
-    userId,
-    agentId: `group_${groupId}`,
+  const response = await memoryRequest<MemoryResponse>('/memories/search', 'POST', {
+    user_id: userId,
+    group_id: groupId,
+    query,
     limit,
   });
 
-  // mem0 returns results array, map to our interface
-  return Array.isArray(results) ? results : [];
+  if (!response.success) {
+    console.error('[Memory] Search failed:', response.error);
+    return [];
+  }
+
+  return (response.data as MemoryItem[]) || [];
 }
 
 /**
@@ -105,14 +123,18 @@ export async function getAllMemories(params: {
 }): Promise<MemoryItem[]> {
   const { userId, groupId, limit = 10 } = params;
 
-  const memories = await memory.getAll({
-    userId,
-    agentId: `group_${groupId}`,
+  const response = await memoryRequest<MemoryResponse>('/memories/all', 'POST', {
+    user_id: userId,
+    group_id: groupId,
     limit,
   });
 
-  // mem0 returns memories array, map to our interface
-  return Array.isArray(memories) ? memories : [];
+  if (!response.success) {
+    console.error('[Memory] GetAll failed:', response.error);
+    return [];
+  }
+
+  return (response.data as MemoryItem[]) || [];
 }
 
 /**
@@ -122,12 +144,95 @@ export async function updateMemory(
   memoryId: string,
   data: string
 ): Promise<void> {
-  await memory.update(memoryId, data);
+  const response = await memoryRequest<MemoryResponse>('/memories/update', 'POST', {
+    memory_id: memoryId,
+    data,
+  });
+
+  if (!response.success) {
+    console.error('[Memory] Update failed:', response.error);
+  }
 }
 
 /**
  * Delete memory by ID
  */
 export async function deleteMemory(memoryId: string): Promise<void> {
-  await memory.delete(memoryId);
+  const response = await memoryRequest<MemoryResponse>('/memories/delete', 'POST', {
+    memory_id: memoryId,
+  });
+
+  if (!response.success) {
+    console.error('[Memory] Delete failed:', response.error);
+  }
+}
+
+/**
+ * Get memory history (audit trail) for a specific memory
+ * Returns all changes made to the memory over time
+ */
+export async function getMemoryHistory(
+  memoryId: string
+): Promise<MemoryHistoryEntry[]> {
+  const response = await memoryRequest<MemoryResponse>(
+    `/memories/history/${memoryId}`,
+    'GET'
+  );
+
+  if (!response.success) {
+    console.error('[Memory] History failed:', response.error);
+    return [];
+  }
+
+  return (response.data as MemoryHistoryEntry[]) || [];
+}
+
+/**
+ * Delete all memories for a user/group
+ */
+export async function deleteAllMemories(params: {
+  userId: string;
+  groupId: string;
+}): Promise<void> {
+  const { userId, groupId } = params;
+
+  const response = await memoryRequest<MemoryResponse>('/memories/delete-all', 'POST', {
+    user_id: userId,
+    group_id: groupId,
+  });
+
+  if (!response.success) {
+    console.error('[Memory] DeleteAll failed:', response.error);
+  }
+}
+
+interface HealthResponse {
+  status: string;
+  service: string;
+  mem0: boolean;
+}
+
+/**
+ * Check if memory service is available
+ */
+export async function isMemoryEnabled(): Promise<boolean> {
+  try {
+    const response = await fetch(`${MEMORY_SERVICE_URL}/health`);
+    const data = (await response.json()) as HealthResponse;
+    return data.status === 'ok' && data.mem0 === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get memory service health status
+ */
+export async function getMemoryHealth(): Promise<HealthResponse | null> {
+  try {
+    const response = await fetch(`${MEMORY_SERVICE_URL}/health`);
+    return (await response.json()) as HealthResponse;
+  } catch {
+    return null;
+  }
 }

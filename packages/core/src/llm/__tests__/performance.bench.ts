@@ -181,12 +181,20 @@ skipIfNoKeys('Performance - Streaming latency', async (t) => {
 
 skipIfNoKeys('Performance - Response quality', async (t) => {
   await t.test('responses are non-empty for all task types', async () => {
+    // Map task types to their corresponding prompt types
+    const taskPromptMap: Record<string, 'assistant' | 'queryResponse' | 'extraction' | 'summarization' | 'translation'> = {
+      chat: 'assistant',
+      query: 'queryResponse',
+      extraction: 'extraction',
+      summarization: 'summarization',
+      translation: 'translation',
+    };
     const tasks = ['chat', 'query', 'extraction', 'summarization', 'translation'] as const;
 
     for (const task of tasks) {
       const response = await generate({
         task,
-        system: getSystemPrompt(task === 'chat' ? 'assistant' : task),
+        system: getSystemPrompt(taskPromptMap[task]),
         prompt: `Test for ${task}`,
         maxTokens: 100
       });

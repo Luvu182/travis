@@ -82,34 +82,101 @@ export const queryLogs = pgTable('query_logs', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-// ==================== ADMIN AUTH TABLES ====================
+// ==================== AUTH TABLES (NextAuth v5 Compatible) ====================
+// Schema follows @auth/drizzle-adapter default schema
+// See: https://authjs.dev/getting-started/adapters/drizzle
 
-// Admin users table (for dashboard authentication)
-export const adminUsers = pgTable('admin_users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  displayName: varchar('display_name', { length: 255 }),
-  role: varchar('role', { length: 50 }).notNull().default('admin'),
+// Role enum for RBAC (custom extension)
+export const authRoleEnum = pgEnum('auth_role', ['admin', 'user']);
+
+// Users table (NextAuth compatible + custom fields)
+export const adminUsers = pgTable('user', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name'),
+  email: text('email').notNull().unique(),
+  emailVerified: timestamp('emailVerified', { mode: 'date' }),
+  image: text('image'),
+  // Custom fields for Jarvis
+  passwordHash: text('password_hash'),
+  role: authRoleEnum('role').notNull().default('user'),
   isActive: boolean('is_active').notNull().default(true),
-  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-}, (table) => ({
-  emailIdx: uniqueIndex('idx_admin_users_email').on(table.email),
+  lastLoginAt: timestamp('last_login_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+});
+
+// Sessions table (NextAuth compatible)
+export const authSessions = pgTable('session', {
+  sessionToken: text('sessionToken').primaryKey(),
+  userId: text('userId').notNull().references(() => adminUsers.id, { onDelete: 'cascade' }),
+  expires: timestamp('expires', { mode: 'date' }).notNull(),
+});
+
+// Accounts table (NextAuth compatible - for OAuth)
+export const authAccounts = pgTable('account', {
+  userId: text('userId').notNull().references(() => adminUsers.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(),
+  provider: text('provider').notNull(),
+  providerAccountId: text('providerAccountId').notNull(),
+  refresh_token: text('refresh_token'),
+  access_token: text('access_token'),
+  expires_at: integer('expires_at'),
+  token_type: text('token_type'),
+  scope: text('scope'),
+  id_token: text('id_token'),
+  session_state: text('session_state'),
+}, (account) => ({
+  compoundKey: uniqueIndex('account_provider_providerAccountId_idx')
+    .on(account.provider, account.providerAccountId),
 }));
 
-// Refresh tokens table (for JWT refresh token management)
+// Verification tokens table (NextAuth compatible)
+export const authVerificationTokens = pgTable('verificationToken', {
+  identifier: text('identifier').notNull(),
+  token: text('token').notNull(),
+  expires: timestamp('expires', { mode: 'date' }).notNull(),
+}, (vt) => ({
+  compoundKey: uniqueIndex('verificationToken_identifier_token_idx')
+    .on(vt.identifier, vt.token),
+}));
+
+// Refresh tokens table (for JWT refresh token management if needed)
 export const refreshTokens = pgTable('refresh_tokens', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => adminUsers.id, { onDelete: 'cascade' }),
-  tokenHash: varchar('token_hash', { length: 255 }).notNull(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  revokedAt: timestamp('revoked_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  userId: text('user_id').notNull().references(() => adminUsers.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
+  revokedAt: timestamp('revoked_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
 }, (table) => ({
   tokenHashIdx: index('idx_refresh_tokens_hash').on(table.tokenHash),
   userIdx: index('idx_refresh_tokens_user').on(table.userId),
+}));
+
+// ==================== WEB CHAT TABLES ====================
+
+// Web chat conversations (dashboard chat sessions)
+export const webConversations = pgTable('web_conversations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  adminUserId: text('admin_user_id').notNull().references(() => adminUsers.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).default('New Chat'),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  userIdx: index('idx_web_conversations_user').on(table.adminUserId),
+  updatedIdx: index('idx_web_conversations_updated').on(table.updatedAt),
+}));
+
+// Web chat messages (messages in dashboard chat)
+export const webMessages = pgTable('web_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  conversationId: uuid('conversation_id').notNull().references(() => webConversations.id, { onDelete: 'cascade' }),
+  role: varchar('role', { length: 20 }).notNull(), // 'user' | 'assistant'
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  conversationIdx: index('idx_web_messages_conversation').on(table.conversationId),
+  createdIdx: index('idx_web_messages_created').on(table.createdAt),
 }));
 
 // ==================== METRICS TABLES ====================
@@ -149,3 +216,9 @@ export type NewRefreshToken = typeof refreshTokens.$inferInsert;
 
 export type MetricsHistory = typeof metricsHistory.$inferSelect;
 export type NewMetricsHistory = typeof metricsHistory.$inferInsert;
+
+export type WebConversation = typeof webConversations.$inferSelect;
+export type NewWebConversation = typeof webConversations.$inferInsert;
+
+export type WebMessage = typeof webMessages.$inferSelect;
+export type NewWebMessage = typeof webMessages.$inferInsert;

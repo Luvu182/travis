@@ -13,18 +13,18 @@ const envSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string(),
   TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
 
-  // Lark
-  LARK_APP_ID: z.string(),
-  LARK_APP_SECRET: z.string(),
+  // Lark (optional - can be added later)
+  LARK_APP_ID: z.string().optional(),
+  LARK_APP_SECRET: z.string().optional(),
   LARK_ENCRYPT_KEY: z.string().optional(),
   LARK_VERIFICATION_TOKEN: z.string().optional(),
 
   // LLM
   GEMINI_API_KEY: z.string(),
-  OPENAI_API_KEY: z.string(),
+  OPENAI_API_KEY: z.string().optional(),
 
-  // mem0
-  MEM0_API_KEY: z.string().optional(),
+  // Memory Service
+  MEMORY_SERVICE_URL: z.string().url().default('http://localhost:8000'),
 
   // Database
   DATABASE_URL: z.string().url(),

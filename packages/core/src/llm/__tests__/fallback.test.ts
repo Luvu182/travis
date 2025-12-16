@@ -123,7 +123,7 @@ test('Fallback - request structure validation', async (t) => {
 
 test('Fallback - model selection stability', async (t) => {
   await t.test('same task always routes to same model', () => {
-    const results = [];
+    const results: string[] = [];
     for (let i = 0; i < 5; i++) {
       const model = selectModel('chat');
       results.push(getModelName(model));
