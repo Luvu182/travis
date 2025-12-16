@@ -13,9 +13,12 @@ export type Role = 'admin' | 'user';
 // Route permissions configuration
 // Routes not listed default to requiring 'user' role (any authenticated user)
 export const routePermissions: Record<string, Role> = {
-  '/dashboard/settings': 'admin',
-  '/dashboard/settings/users': 'admin',
-  '/dashboard/settings/system': 'admin',
+  // Admin routes - system management
+  '/admin': 'admin',
+  '/admin/users': 'admin',
+  '/admin/conversations': 'admin',
+  '/admin/memory': 'admin',
+  '/admin/settings': 'admin',
 };
 
 /**

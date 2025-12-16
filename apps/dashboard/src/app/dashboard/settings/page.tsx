@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTheme } from 'next-themes';
-import { Card, Button, Input } from '@/components/ui';
+import { Card, Button, Input, Badge, Icon } from '@/components/ui';
+import { signOut } from 'next-auth/react';
 
 interface ChatSettings {
   contextLength: number;
@@ -15,7 +15,6 @@ const DEFAULT_CHAT_SETTINGS: ChatSettings = {
 };
 
 export default function SettingsPage() {
-  const { theme, setTheme } = useTheme();
   const [chatSettings, setChatSettings] = useState<ChatSettings>(DEFAULT_CHAT_SETTINGS);
   const [saved, setSaved] = useState(false);
 
@@ -32,30 +31,21 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-neutral-900">Cài Đặt</h2>
+  const handleLogout = async () => {
+    if (confirm('Bạn có chắc muốn đăng xuất?')) {
+      await signOut({ callbackUrl: '/login' });
+    }
+  };
 
-      {/* Appearance */}
-      <Card variant="default">
-        <h3 className="text-base font-semibold text-neutral-900 mb-2">Giao Diện</h3>
-        <p className="text-sm text-neutral-500 mb-4">Tùy chỉnh giao diện dashboard</p>
-        <div className="flex items-center justify-between">
-          <div>
-            <label className="font-medium text-neutral-700">Theme</label>
-            <p className="text-sm text-neutral-500">Chọn theme yêu thích</p>
-          </div>
-          <select
-            value={theme}
-            onChange={(e) => setTheme(e.target.value)}
-            className="px-3 py-2 border border-neutral-300 rounded-xl bg-white text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="light">Sáng</option>
-            <option value="dark">Tối</option>
-            <option value="system">Theo hệ thống</option>
-          </select>
-        </div>
-      </Card>
+  return (
+    <div className="space-y-6 p-6 overflow-auto h-full max-w-4xl">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-neutral-900">Cài Đặt</h2>
+        <p className="text-sm text-neutral-500 mt-1">
+          Tùy chỉnh các thiết lập cho dashboard và chat
+        </p>
+      </div>
 
       {/* Notifications */}
       <Card variant="default">
@@ -128,7 +118,7 @@ export default function SettingsPage() {
           </div>
           <div className="pt-2">
             <Button
-              variant={saved ? 'primary' : 'primary'}
+              variant="primary"
               size="sm"
               onClick={saveChatSettings}
               className={saved ? 'bg-emerald-500 hover:bg-emerald-600' : ''}
@@ -167,11 +157,7 @@ export default function SettingsPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => {
-            if (confirm('Bạn có chắc muốn đăng xuất?')) {
-              window.location.href = '/login';
-            }
-          }}
+          onClick={handleLogout}
           className="text-red-600 border-red-300 hover:bg-red-50"
         >
           Đăng Xuất

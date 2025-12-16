@@ -1,10 +1,30 @@
 /**
  * Auth configuration for Edge runtime (middleware)
- * This config does NOT include database adapter or callbacks that require Node.js
+ * Shared callbacks (jwt, session, authorized) work in Edge
+ * Database operations are in auth.ts (Node.js only)
  */
 import type { NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
+
+// Type augmentation for role in session
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name?: string | null;
+      image?: string | null;
+      role: 'admin' | 'user';
+    };
+  }
+  interface User {
+    role?: 'admin' | 'user';
+  }
+}
+
+// JWT type is extended via next-auth module augmentation
+// The JWT token will have id and role from the jwt callback
 
 export const authConfig: NextAuthConfig = {
   pages: { signIn: '/login' },
@@ -25,30 +45,48 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
+    // JWT callback runs in both Edge (middleware) and Node.js (API routes)
+    // This ensures role is always available in the token
+    jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
+      return token;
+    },
+    // Session callback transfers token data to session
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = (token.role as 'admin' | 'user') || 'user';
+      }
+      return session;
+    },
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
       const pathname = request.nextUrl.pathname;
       const isOnDashboard = pathname.startsWith('/dashboard');
+      const isOnAdmin = pathname.startsWith('/admin');
       const isOnLogin = pathname === '/login';
       const isHomePage = pathname === '/';
 
-      // Home page is public - allow everyone
+      // Home page is public
       if (isHomePage) {
         return true;
       }
 
-      // Dashboard requires authentication
-      if (isOnDashboard) {
+      // Admin routes - require admin role
+      if (isOnAdmin) {
         if (!isLoggedIn) return false;
-
-        // Admin-only routes - check role from session (set in auth.ts session callback)
-        const adminRoutes = ['/dashboard/settings'];
-        const requiresAdmin = adminRoutes.some((route) => pathname.startsWith(route));
-
-        if (requiresAdmin && auth?.user?.role !== 'admin') {
+        if (auth?.user?.role !== 'admin') {
           return Response.redirect(new URL('/dashboard?error=unauthorized', request.nextUrl));
         }
+        return true;
+      }
 
+      // Dashboard requires authentication (any role)
+      if (isOnDashboard) {
+        if (!isLoggedIn) return false;
         return true;
       }
 

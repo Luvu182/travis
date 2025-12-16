@@ -76,7 +76,23 @@ All docs in `./docs/`:
 - `project-overview-pdr.md` - Product requirements
 - `code-standards.md` - Code conventions
 - `system-architecture.md` - Architecture details
+- `memory-architecture.md` - Memory use case & architecture
 - `deployment-guide.md` - Deployment instructions
+
+## Memory Architecture (QUAN TRỌNG)
+
+### Shared Memory trong Group Chat
+- Bot add vào group → members trao đổi → bot trích xuất → lưu memory
+- **ADD memory**: Lưu `user_id` vào metadata để track AI nói gì
+- **SEARCH memory**: Get ALL trong group, **KHÔNG filter by user_id**
+- **Lý do**: Shared context - thông tin 1 người nói, cả nhóm cần access
+
+### Workspace Layer (TODO)
+- Mỗi workspace chứa nhiều groups (Telegram, Lark)
+- Bot search across ALL groups trong workspace
+- Hiện tại chưa implement
+
+Chi tiết: `docs/memory-architecture.md`
 
 ## Important Rules
 

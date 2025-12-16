@@ -13,7 +13,7 @@ interface Conversation {
   platform: string;
 }
 
-export default function ConversationsPage() {
+export default function AdminConversationsPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -54,12 +54,30 @@ export default function ConversationsPage() {
       c.groupName?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const getPlatformBadge = (platform: string) => {
+    const variants: Record<string, 'primary' | 'info' | 'success' | 'default'> = {
+      telegram: 'info',
+      lark: 'primary',
+      web: 'success',
+    };
+    return variants[platform.toLowerCase()] || 'default';
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 overflow-auto h-full">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-2xl font-bold text-neutral-900">Lịch Sử Hội Thoại</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-neutral-900">All Conversations</h2>
+          <p className="text-sm text-neutral-500 mt-1">
+            Xem tất cả tin nhắn từ các nền tảng (Admin Only)
+          </p>
+        </div>
         <div className="flex items-center gap-3">
+          <Badge variant="warning" size="sm">
+            <Icon name="shield" size="xs" className="mr-1" />
+            Admin
+          </Badge>
           <Input
             type="text"
             placeholder="Tìm kiếm..."
@@ -73,6 +91,47 @@ export default function ConversationsPage() {
             Làm mới
           </Button>
         </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card variant="default" padding="sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center">
+              <Icon name="message" size="sm" className="text-primary-600" />
+            </div>
+            <div>
+              <p className="text-sm text-neutral-500">Tổng tin nhắn</p>
+              <p className="text-xl font-bold text-neutral-900">{conversations.length}</p>
+            </div>
+          </div>
+        </Card>
+        <Card variant="default" padding="sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <Icon name="user" size="sm" className="text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm text-neutral-500">Người dùng</p>
+              <p className="text-xl font-bold text-neutral-900">
+                {new Set(conversations.map(c => c.userName).filter(Boolean)).size}
+              </p>
+            </div>
+          </div>
+        </Card>
+        <Card variant="default" padding="sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+              <Icon name="globe" size="sm" className="text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm text-neutral-500">Nhóm</p>
+              <p className="text-xl font-bold text-neutral-900">
+                {new Set(conversations.map(c => c.groupName).filter(Boolean)).size}
+              </p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Table */}
@@ -101,25 +160,39 @@ export default function ConversationsPage() {
                 ))
               ) : filteredConversations.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-neutral-500">
-                    <Icon name="message" size="lg" className="mx-auto mb-2 text-neutral-300" />
-                    <p>Không tìm thấy hội thoại nào</p>
+                  <td colSpan={5} className="text-center py-12">
+                    <div className="w-16 h-16 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto mb-4">
+                      <Icon name="message" size="lg" className="text-neutral-400" />
+                    </div>
+                    <p className="text-neutral-500 font-medium">Không tìm thấy hội thoại nào</p>
+                    <p className="text-sm text-neutral-400 mt-1">
+                      {search ? 'Thử tìm với từ khóa khác' : 'Chưa có tin nhắn nào'}
+                    </p>
                   </td>
                 </tr>
               ) : (
                 filteredConversations.map((conv) => (
                   <tr key={conv.id} className="hover:bg-neutral-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-neutral-900">
-                      {conv.userName || 'Unknown'}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+                          <span className="text-xs font-medium text-primary-600">
+                            {(conv.userName || 'U')[0].toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="font-medium text-neutral-900">
+                          {conv.userName || 'Unknown'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-neutral-600">
-                      {conv.groupName || 'Direct'}
+                      {conv.groupName || <span className="text-neutral-400">Direct</span>}
                     </td>
-                    <td className="px-4 py-3 max-w-md truncate text-neutral-700">
-                      {conv.content}
+                    <td className="px-4 py-3 max-w-md">
+                      <p className="truncate text-neutral-700">{conv.content}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant="default" size="sm">
+                      <Badge variant={getPlatformBadge(conv.platform)} size="sm">
                         {conv.platform}
                       </Badge>
                     </td>
@@ -138,6 +211,7 @@ export default function ConversationsPage() {
       {hasMore && !isLoading && (
         <div className="flex justify-center">
           <Button variant="outline" onClick={loadMore}>
+            <Icon name="chevron-down" size="xs" className="mr-1" />
             Tải thêm
           </Button>
         </div>
