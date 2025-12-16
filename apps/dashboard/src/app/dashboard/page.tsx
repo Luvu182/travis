@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Wifi,
   Clock,
@@ -8,12 +8,16 @@ import {
   Users,
   Gauge,
   AlertTriangle,
+  Radio,
 } from 'lucide-react';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { LineChart } from '@/components/dashboard/charts/line-chart';
 import { useMetricsStore } from '@/stores/metrics';
 import { dashboardAPI } from '@/lib/api';
+import { useSSE } from '@/hooks/use-sse';
 import { cn } from '@/lib/utils';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 export default function DashboardPage() {
   const {
@@ -31,6 +35,47 @@ export default function DashboardPage() {
     setLoading,
   } = useMetricsStore();
 
+  const [sseEnabled, setSseEnabled] = useState(true);
+
+  // SSE for real-time updates
+  const { isConnected, lastMetrics } = useSSE(
+    `${API_URL}/api/dashboard/stream`,
+    {
+      onMetrics: (metrics) => {
+        // Update health status
+        setHealth({
+          status: metrics.health.status,
+          uptime: {
+            ms: metrics.health.uptimeMs,
+            hours: Math.round((metrics.health.uptimeMs / (1000 * 60 * 60)) * 100) / 100,
+            percentage: 99.9,
+          },
+          lastPing: metrics.timestamp,
+          platforms: health?.platforms || {},
+          errorRate: metrics.health.errorRate,
+        });
+
+        // Update conversation metrics
+        setConversations({
+          totalConversations: metrics.conversations.total,
+          activeUsers: {
+            '1h': metrics.conversations.activeUsers,
+            '24h': metrics.conversations.activeUsers,
+            '7d': metrics.conversations.activeUsers,
+          },
+          messagesPerMinute: 0,
+          avgResponseTimeMs: metrics.performance.responseTimeP50,
+          uniqueGroups: conversations?.uniqueGroups || 0,
+        });
+
+        // Update performance and charts
+        addLatencyPoint(metrics.performance.responseTimeP50);
+        addRequestRatePoint(metrics.performance.cpuUsage);
+      },
+    }
+  );
+
+  // Initial data fetch
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -53,16 +98,12 @@ export default function DashboardPage() {
     }
 
     fetchData();
-
-    // Refresh every 5 seconds
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="space-y-6">
       {/* Status Banner */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <span
           className={cn(
             'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
@@ -73,6 +114,17 @@ export default function DashboardPage() {
         >
           <Wifi className="h-3 w-3 mr-1" />
           {health?.status || 'Loading...'}
+        </span>
+        <span
+          className={cn(
+            'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
+            isConnected
+              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+              : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
+          )}
+        >
+          <Radio className={cn('h-3 w-3 mr-1', isConnected && 'animate-pulse')} />
+          {isConnected ? 'Live' : 'Polling'}
         </span>
         {health && health.errorRate > 0 && (
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">

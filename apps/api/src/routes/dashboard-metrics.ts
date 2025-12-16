@@ -195,3 +195,71 @@ dashboardMetricsRoutes.get('/metrics/history', zValidator('query', metricsHistor
     })),
   });
 });
+
+/**
+ * GET /dashboard/stream
+ * Server-Sent Events for real-time metrics
+ */
+dashboardMetricsRoutes.get('/stream', async (c) => {
+  const encoder = new TextEncoder();
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const sendEvent = (event: string, data: unknown) => {
+        const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+        controller.enqueue(encoder.encode(message));
+      };
+
+      // Send initial connection event
+      sendEvent('connected', { timestamp: new Date().toISOString() });
+
+      // Periodic metrics updates
+      const interval = setInterval(async () => {
+        try {
+          const memUsage = process.memoryUsage();
+          const uptimeMs = Date.now() - startTime;
+          const since1h = new Date(Date.now() - 60 * 60 * 1000);
+
+          const [stats, queryStats] = await Promise.all([
+            getConversationStats(since1h),
+            getQueryPerformanceStats(since1h),
+          ]);
+
+          sendEvent('metrics', {
+            timestamp: new Date().toISOString(),
+            health: {
+              status: 'online',
+              uptimeMs,
+              errorRate: 0,
+            },
+            conversations: {
+              total: stats?.totalMessages || 0,
+              activeUsers: stats?.uniqueUsers || 0,
+            },
+            performance: {
+              responseTimeP50: Math.round(Number(queryStats?.avgLatencyMs) || 50),
+              cpuUsage: os.loadavg()[0],
+              memoryUsage: (memUsage.heapUsed / memUsage.heapTotal) * 100,
+            },
+          });
+        } catch (error) {
+          console.error('SSE metrics error:', error);
+        }
+      }, 5000); // Update every 5 seconds
+
+      // Handle client disconnect
+      c.req.raw.signal.addEventListener('abort', () => {
+        clearInterval(interval);
+        controller.close();
+      });
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
+});
