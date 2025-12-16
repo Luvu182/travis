@@ -13,7 +13,6 @@ import {
   getValidRefreshToken,
   revokeRefreshToken,
   verifyPassword,
-  hashPassword,
 } from '@jarvis/db';
 
 const authRoutes = new Hono();

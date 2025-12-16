@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Button, Icon, Container, Badge } from '@/components/ui';
+import { Button, Icon, Container } from '@/components/ui';
 
 const navLinks = [
   { label: 'Tính Năng', href: '#features' },

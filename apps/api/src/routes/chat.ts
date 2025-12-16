@@ -24,7 +24,7 @@ chatRoutes.post(
   zValidator('json', chatRequestSchema),
   async (c) => {
     const startTime = Date.now();
-    const { userId, groupId, message, senderName, groupName } = c.req.valid('json');
+    const { userId, groupId, message } = c.req.valid('json');
 
     try {
       // 1. Search for relevant memories

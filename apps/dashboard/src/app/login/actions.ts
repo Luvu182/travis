@@ -4,7 +4,6 @@ import { signIn } from '@/auth';
 import { checkRateLimit, resetRateLimit, LOGIN_RATE_LIMIT } from '@/lib/rate-limit';
 import { headers } from 'next/headers';
 import { AuthError } from 'next-auth';
-import { redirect } from 'next/navigation';
 
 export interface LoginResult {
   success: boolean;

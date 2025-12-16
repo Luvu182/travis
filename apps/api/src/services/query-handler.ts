@@ -196,7 +196,7 @@ export async function executeQuery(options: QueryOptions): Promise<QueryResult> 
 
     // Step 8: Format context for LLM
     const formattedContext = formatMemoriesForPrompt(
-      options.includeMetadata !== false ? finalMemories : finalMemories.map(({ metadata, ...rest }) => rest)
+      options.includeMetadata !== false ? finalMemories : finalMemories.map(({ metadata: _metadata, ...rest }) => rest)
     );
 
     const queryLatencyMs = Date.now() - startTime;

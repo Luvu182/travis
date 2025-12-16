@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Brain, Database, CloudUpload } from 'lucide-react';
-import { MetricCard } from '@/components/dashboard/metric-card';
+import { Card, StatCard, Button, Badge } from '@/components/ui';
 import { dashboardAPI } from '@/lib/api';
 
 interface MemoryConsumer {
@@ -40,86 +39,76 @@ export default function MemoryPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Memory Analytics</h2>
+      <h2 className="text-2xl font-bold text-neutral-900">Phân Tích Bộ Nhớ</h2>
 
+      {/* Metric Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <MetricCard
-          title="Vector Store Size"
+        <StatCard
+          label="Vector Store Size"
           value={memory?.vectorStoreSize?.formatted || '0 MB'}
-          icon={<Database className="h-5 w-5" />}
-          isLoading={isLoading}
+          icon="database"
         />
-        <MetricCard
-          title="Embedding Count"
-          value={memory?.embeddingCount?.toLocaleString() || '0'}
-          icon={<Brain className="h-5 w-5" />}
-          isLoading={isLoading}
+        <StatCard
+          label="Embedding Count"
+          value={memory?.embeddingCount || 0}
+          icon="brain"
         />
-        <MetricCard
-          title="Storage Used"
+        <StatCard
+          label="Storage Used"
           value={memory?.storageUsed?.formatted || '0 MB'}
-          icon={<CloudUpload className="h-5 w-5" />}
-          isLoading={isLoading}
+          icon="server"
         />
       </div>
 
+      {/* Growth & Consumers */}
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <h3 className="text-base font-semibold mb-4">Growth Trend</h3>
+        <Card variant="default">
+          <h3 className="text-base font-semibold text-neutral-900 mb-4">Xu Hướng Tăng Trưởng</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span>Daily Growth</span>
-              <span className="text-green-500 font-medium">
-                +{memory?.growthTrend?.daily || 0} memories
-              </span>
+              <span className="text-neutral-600">Tăng trưởng hàng ngày</span>
+              <Badge variant="success">+{memory?.growthTrend?.daily || 0} memories</Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span>Weekly Growth</span>
-              <span className="text-green-500 font-medium">
-                +{memory?.growthTrend?.weekly || 0} memories
-              </span>
+              <span className="text-neutral-600">Tăng trưởng hàng tuần</span>
+              <Badge variant="success">+{memory?.growthTrend?.weekly || 0} memories</Badge>
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <h3 className="text-base font-semibold mb-4">Top Consumers</h3>
+        <Card variant="default">
+          <h3 className="text-base font-semibold text-neutral-900 mb-4">Top Consumers</h3>
           {memory && memory.topConsumers && memory.topConsumers.length > 0 ? (
             <div className="space-y-3">
               {memory.topConsumers.map((consumer: MemoryConsumer, i: number) => (
                 <div key={i} className="flex justify-between items-center">
-                  <span className="truncate max-w-[200px]">{consumer.name}</span>
-                  <span className="text-muted-foreground">{consumer.count} memories</span>
+                  <span className="truncate max-w-[200px] text-neutral-700">{consumer.name}</span>
+                  <span className="text-neutral-500 text-sm">{consumer.count} memories</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">No data available</p>
+            <p className="text-neutral-500 text-sm">Chưa có dữ liệu</p>
           )}
-        </div>
+        </Card>
       </div>
 
-      <div className="rounded-lg border bg-card p-4 shadow-sm">
-        <h3 className="text-base font-semibold mb-4">Memory Management</h3>
-        <p className="text-muted-foreground text-sm mb-4">
-          Memory is managed by mem0 OSS with pgvector for similarity search.
-          Embeddings are generated using Gemini embedding-001 (1536 dimensions).
+      {/* Memory Management */}
+      <Card variant="default">
+        <h3 className="text-base font-semibold text-neutral-900 mb-2">Quản Lý Bộ Nhớ</h3>
+        <p className="text-neutral-500 text-sm mb-4">
+          Memory được quản lý bởi mem0 OSS với pgvector cho tìm kiếm tương tự.
+          Embeddings được tạo bằng Gemini embedding-001 (1536 dimensions).
         </p>
-        <div className="flex gap-2">
-          <button
-            className="px-4 py-2 bg-muted hover:bg-muted/80 rounded-md text-sm transition-colors"
-            disabled
-          >
+        <div className="flex gap-3">
+          <Button variant="outline" size="sm" disabled>
             Export Memories
-          </button>
-          <button
-            className="px-4 py-2 bg-muted hover:bg-muted/80 rounded-md text-sm transition-colors"
-            disabled
-          >
+          </Button>
+          <Button variant="outline" size="sm" disabled>
             Cleanup Old Data
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

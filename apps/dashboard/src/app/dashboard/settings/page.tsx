@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
+import { Card, Button, Input } from '@/components/ui';
 
 interface ChatSettings {
   contextLength: number;
@@ -18,7 +19,6 @@ export default function SettingsPage() {
   const [chatSettings, setChatSettings] = useState<ChatSettings>(DEFAULT_CHAT_SETTINGS);
   const [saved, setSaved] = useState(false);
 
-  // Load settings from localStorage
   useEffect(() => {
     const savedSettings = localStorage.getItem('chat-settings');
     if (savedSettings) {
@@ -26,7 +26,6 @@ export default function SettingsPage() {
     }
   }, []);
 
-  // Save chat settings
   const saveChatSettings = () => {
     localStorage.setItem('chat-settings', JSON.stringify(chatSettings));
     setSaved(true);
@@ -35,85 +34,75 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Settings</h2>
+      <h2 className="text-2xl font-bold text-neutral-900">Cài Đặt</h2>
 
-      <div className="rounded-lg border bg-card p-4 shadow-sm">
-        <h3 className="text-base font-semibold mb-2">Appearance</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Customize the dashboard appearance
-        </p>
+      {/* Appearance */}
+      <Card variant="default">
+        <h3 className="text-base font-semibold text-neutral-900 mb-2">Giao Diện</h3>
+        <p className="text-sm text-neutral-500 mb-4">Tùy chỉnh giao diện dashboard</p>
         <div className="flex items-center justify-between">
           <div>
-            <label className="font-medium">Theme</label>
-            <p className="text-sm text-muted-foreground">
-              Select your preferred theme
-            </p>
+            <label className="font-medium text-neutral-700">Theme</label>
+            <p className="text-sm text-neutral-500">Chọn theme yêu thích</p>
           </div>
           <select
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
-            className="px-3 py-2 border rounded-md bg-background"
+            className="px-3 py-2 border border-neutral-300 rounded-xl bg-white text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="system">System</option>
+            <option value="light">Sáng</option>
+            <option value="dark">Tối</option>
+            <option value="system">Theo hệ thống</option>
           </select>
         </div>
-      </div>
+      </Card>
 
-      <div className="rounded-lg border bg-card p-4 shadow-sm">
-        <h3 className="text-base font-semibold mb-2">Notifications</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Configure alert preferences
-        </p>
+      {/* Notifications */}
+      <Card variant="default">
+        <h3 className="text-base font-semibold text-neutral-900 mb-2">Thông Báo</h3>
+        <p className="text-sm text-neutral-500 mb-4">Cấu hình thông báo</p>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <label className="font-medium">Error Alerts</label>
-              <p className="text-sm text-muted-foreground">
-                Receive alerts when error rate exceeds threshold
-              </p>
+              <label className="font-medium text-neutral-700">Cảnh báo lỗi</label>
+              <p className="text-sm text-neutral-500">Nhận thông báo khi error rate vượt ngưỡng</p>
             </div>
             <input
               type="checkbox"
               defaultChecked
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
             />
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <label className="font-medium">Performance Alerts</label>
-              <p className="text-sm text-muted-foreground">
-                Alert when response time exceeds 1 second
-              </p>
+              <label className="font-medium text-neutral-700">Cảnh báo hiệu năng</label>
+              <p className="text-sm text-neutral-500">Thông báo khi response time vượt 1 giây</p>
             </div>
             <input
               type="checkbox"
               defaultChecked
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
             />
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Chat Settings */}
-      <div className="rounded-lg border bg-card p-4 shadow-sm">
-        <h3 className="text-base font-semibold mb-2">Chat Configuration</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Cấu hình trò chuyện với Jarvis
-        </p>
+      <Card variant="default">
+        <h3 className="text-base font-semibold text-neutral-900 mb-2">Cấu Hình Chat</h3>
+        <p className="text-sm text-neutral-500 mb-4">Cấu hình trò chuyện với Jarvis</p>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <label className="font-medium">Context Length</label>
-              <p className="text-sm text-muted-foreground">
-                Số tin nhắn gần nhất được gửi kèm làm context (giống ChatGPT)
+              <label className="font-medium text-neutral-700">Context Length</label>
+              <p className="text-sm text-neutral-500">
+                Số tin nhắn gần nhất được gửi kèm làm context
               </p>
             </div>
             <select
               value={chatSettings.contextLength}
-              onChange={(e) => setChatSettings(s => ({ ...s, contextLength: Number(e.target.value) }))}
-              className="px-3 py-2 border rounded-md bg-background"
+              onChange={(e) => setChatSettings((s) => ({ ...s, contextLength: Number(e.target.value) }))}
+              className="px-3 py-2 border border-neutral-300 rounded-xl bg-white text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value={5}>5 tin nhắn</option>
               <option value={10}>10 tin nhắn</option>
@@ -125,70 +114,69 @@ export default function SettingsPage() {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <label className="font-medium">Memory Integration</label>
-              <p className="text-sm text-muted-foreground">
-                Sử dụng long-term memory (mem0) để nhớ thông tin từ các cuộc trò chuyện trước
+              <label className="font-medium text-neutral-700">Memory Integration</label>
+              <p className="text-sm text-neutral-500">
+                Sử dụng long-term memory (mem0) để nhớ thông tin
               </p>
             </div>
             <input
               type="checkbox"
               checked={chatSettings.useMemory}
-              onChange={(e) => setChatSettings(s => ({ ...s, useMemory: e.target.checked }))}
-              className="h-4 w-4 rounded border-gray-300"
+              onChange={(e) => setChatSettings((s) => ({ ...s, useMemory: e.target.checked }))}
+              className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
             />
           </div>
           <div className="pt-2">
-            <button
+            <Button
+              variant={saved ? 'primary' : 'primary'}
+              size="sm"
               onClick={saveChatSettings}
-              className={`px-4 py-2 rounded-md text-sm transition-colors ${
-                saved
-                  ? 'bg-green-500 text-white'
-                  : 'bg-blue-500 hover:bg-blue-600 text-white'
-              }`}
+              className={saved ? 'bg-emerald-500 hover:bg-emerald-600' : ''}
             >
               {saved ? 'Đã lưu!' : 'Lưu cài đặt Chat'}
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
-      <div className="rounded-lg border bg-card p-4 shadow-sm">
-        <h3 className="text-base font-semibold mb-2">API Configuration</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Backend API connection settings
-        </p>
+      {/* API Configuration */}
+      <Card variant="default">
+        <h3 className="text-base font-semibold text-neutral-900 mb-2">Cấu Hình API</h3>
+        <p className="text-sm text-neutral-500 mb-4">Cài đặt kết nối backend API</p>
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium">API URL</label>
-            <input
+            <label className="text-sm font-medium text-neutral-700">API URL</label>
+            <Input
               type="text"
               value={process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}
               disabled
-              className="mt-1 w-full px-3 py-2 border rounded-md bg-muted text-muted-foreground"
+              className="mt-1"
+              fullWidth
             />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Set via NEXT_PUBLIC_API_URL environment variable
+          <p className="text-xs text-neutral-400">
+            Cài đặt qua biến môi trường NEXT_PUBLIC_API_URL
           </p>
         </div>
-      </div>
+      </Card>
 
-      <div className="rounded-lg border bg-card p-4 shadow-sm">
-        <h3 className="text-base font-semibold mb-2">Account</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Manage your admin account
-        </p>
-        <button
-          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm transition-colors"
+      {/* Account */}
+      <Card variant="default">
+        <h3 className="text-base font-semibold text-neutral-900 mb-2">Tài Khoản</h3>
+        <p className="text-sm text-neutral-500 mb-4">Quản lý tài khoản admin</p>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => {
-            if (confirm('Are you sure you want to log out?')) {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
               window.location.href = '/login';
             }
           }}
+          className="text-red-600 border-red-300 hover:bg-red-50"
         >
-          Log Out
-        </button>
-      </div>
+          Đăng Xuất
+        </Button>
+      </Card>
     </div>
   );
 }

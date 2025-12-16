@@ -1,8 +1,6 @@
 // Load .env before importing config
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
 // Find monorepo root (go up from apps/api to root)
 const currentDir = process.cwd();

@@ -45,16 +45,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account }) {
       // Handle OAuth sign in - create/update user in database
       if (account?.provider === 'google' && user.email) {
-        const dbUser = await findOrCreateOAuthUser({
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          provider: account.provider,
-          providerAccountId: account.providerAccountId,
-        });
-        // Attach db user data to the user object
-        user.id = dbUser.id;
-        user.role = dbUser.role;
+        try {
+          const dbUser = await findOrCreateOAuthUser({
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+          });
+          // Attach db user data to the user object
+          user.id = dbUser.id;
+          user.role = dbUser.role;
+        } catch (error) {
+          console.error('[Auth] Failed to create/find OAuth user:', error);
+          return false; // This will redirect to error page
+        }
       }
       return true;
     },

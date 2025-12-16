@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Button, Icon, Container, Badge, Avatar } from '@/components/ui';
+import { Button, Icon, Container, Badge, Avatar, type IconName } from '@/components/ui';
 
 // Dynamic date helpers
 const formatDate = (date: Date) =>
@@ -122,7 +122,7 @@ export function HeroSection() {
     return () => clearTimeout(timeout);
   }, [phase, userText, assistantText, currentConvo, resetAndNext]);
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type: string): IconName => {
     switch (type) {
       case 'meeting': return 'clock';
       case 'memory': return 'memory';
@@ -252,7 +252,7 @@ export function HeroSection() {
                         <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
                           <div className="px-3 py-2 bg-neutral-50 border-b border-neutral-100 flex items-center gap-2">
                             <div className={`w-6 h-6 rounded-md flex items-center justify-center ${getTypeColor(currentConvo.extracted.type)}`}>
-                              <Icon name={getTypeIcon(currentConvo.extracted.type) as any} size="xs" />
+                              <Icon name={getTypeIcon(currentConvo.extracted.type)} size="xs" />
                             </div>
                             <span className="text-sm font-medium text-neutral-800">
                               {currentConvo.extracted.title}
