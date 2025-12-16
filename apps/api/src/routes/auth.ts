@@ -12,6 +12,8 @@ import {
   saveRefreshToken,
   getValidRefreshToken,
   revokeRefreshToken,
+  verifyPassword,
+  hashPassword,
 } from '@jarvis/db';
 
 const authRoutes = new Hono();
@@ -20,20 +22,8 @@ const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 const jwtSecret = new TextEncoder().encode(env.JWT_SECRET);
-const refreshSecret = new TextEncoder().encode(env.JWT_REFRESH_SECRET);
 
-// Password verification (SHA256 + salt for simplicity)
-async function verifyPassword(hash: string, password: string): Promise<boolean> {
-  const inputHash = createHash('sha256').update(password + env.JWT_SECRET).digest('hex');
-  return hash === inputHash;
-}
-
-// Hash password for creating users
-export function hashPassword(password: string): string {
-  return createHash('sha256').update(password + env.JWT_SECRET).digest('hex');
-}
-
-// Hash refresh token for storage
+// Hash refresh token for storage (SHA256 is fine for tokens, not passwords)
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
@@ -51,11 +41,11 @@ authRoutes.post('/login', zValidator('json', loginSchema), async (c) => {
   const { email, password } = c.req.valid('json');
 
   const user = await getAdminByEmail(email);
-  if (!user || !user.isActive) {
+  if (!user || !user.isActive || !user.passwordHash) {
     return c.json({ error: 'Invalid credentials' }, 401);
   }
 
-  const validPassword = await verifyPassword(user.passwordHash, password);
+  const validPassword = await verifyPassword(password, user.passwordHash);
   if (!validPassword) {
     return c.json({ error: 'Invalid credentials' }, 401);
   }
@@ -108,7 +98,7 @@ authRoutes.post('/login', zValidator('json', loginSchema), async (c) => {
     user: {
       id: user.id,
       email: user.email,
-      displayName: user.displayName,
+      name: user.name,
       role: user.role,
     },
   });
@@ -199,7 +189,7 @@ authRoutes.get('/me', async (c) => {
       user: {
         id: user.id,
         email: user.email,
-        displayName: user.displayName,
+        name: user.name,
         role: user.role,
       },
     });

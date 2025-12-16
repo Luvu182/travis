@@ -5,6 +5,7 @@ import { searchRelevantMemories, formatMemoriesForPrompt, type MemoryItem } from
 export interface QueryOptions {
   userId: string;
   groupId: string;
+  workspaceId?: string;  // Multi-tenant workspace isolation
   query: string;
   limit?: number;
   minScore?: number;
@@ -152,6 +153,7 @@ export async function executeQuery(options: QueryOptions): Promise<QueryResult> 
     const rawMemories = await searchRelevantMemories({
       userId: options.userId,
       groupId: options.groupId,
+      workspaceId: options.workspaceId,
       query: options.query,
       limit: searchLimit,
     });

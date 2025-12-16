@@ -32,6 +32,7 @@ import { queryRoutes } from './routes/query.js';
 import { metricsRoutes } from './routes/metrics.js';
 import { authRoutes } from './routes/auth.js';
 import { dashboardMetricsRoutes } from './routes/dashboard-metrics.js';
+import { workspaceRoutes } from './routes/workspaces.js';
 import { telegramWebhook } from './webhooks/telegram.js';
 import { larkWebhook } from './webhooks/lark.js';
 import { errorHandler } from './middleware/error.js';
@@ -71,9 +72,11 @@ app.route('/webhook/lark', larkWebhook);
 // Dashboard auth routes (no rate limiting for login/logout)
 app.route('/api/auth', authRoutes);
 
-// Dashboard metrics routes (protected by auth)
+// Dashboard routes (protected by auth)
 app.use('/api/dashboard/*', dashboardAuthMiddleware);
+app.use('/api/workspaces/*', dashboardAuthMiddleware);
 app.route('/api/dashboard', dashboardMetricsRoutes);
+app.route('/api/workspaces', workspaceRoutes);
 
 // Start server
 const port = Number(env.PORT);

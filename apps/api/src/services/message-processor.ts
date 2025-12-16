@@ -6,6 +6,7 @@ import { executeQuery } from './query-handler.js';
 export interface ProcessMessageOptions {
   userId: string;
   groupId: string;
+  workspaceId?: string;  // Multi-tenant workspace isolation
   message: string;
   senderName?: string;
   groupName?: string;
@@ -27,25 +28,57 @@ interface ProcessingMetrics {
   lastProcessedAt?: Date;
 }
 
+interface WorkspaceMetrics extends ProcessingMetrics {
+  workspaceId: string;
+}
+
 // ==================== METRICS ====================
 
-const metrics: ProcessingMetrics = {
+// Global metrics (all workspaces combined)
+const globalMetrics: ProcessingMetrics = {
   totalProcessed: 0,
   totalFailed: 0,
   totalRetries: 0,
   avgLatencyMs: 0,
 };
 
+// Per-workspace metrics
+const workspaceMetricsMap = new Map<string, ProcessingMetrics>();
+
+// Legacy key for messages without workspaceId
+const LEGACY_WORKSPACE_KEY = '__legacy__';
+
 export function getProcessingMetrics(): ProcessingMetrics {
-  return { ...metrics };
+  return { ...globalMetrics };
+}
+
+export function getWorkspaceMetrics(workspaceId: string): ProcessingMetrics | null {
+  const metrics = workspaceMetricsMap.get(workspaceId);
+  return metrics ? { ...metrics } : null;
+}
+
+export function getAllWorkspaceMetrics(): WorkspaceMetrics[] {
+  const result: WorkspaceMetrics[] = [];
+  for (const [workspaceId, metrics] of workspaceMetricsMap) {
+    result.push({ ...metrics, workspaceId });
+  }
+  return result;
 }
 
 export function resetProcessingMetrics(): void {
-  metrics.totalProcessed = 0;
-  metrics.totalFailed = 0;
-  metrics.totalRetries = 0;
-  metrics.avgLatencyMs = 0;
-  metrics.lastProcessedAt = undefined;
+  globalMetrics.totalProcessed = 0;
+  globalMetrics.totalFailed = 0;
+  globalMetrics.totalRetries = 0;
+  globalMetrics.avgLatencyMs = 0;
+  globalMetrics.lastProcessedAt = undefined;
+}
+
+export function resetWorkspaceMetrics(workspaceId: string): boolean {
+  return workspaceMetricsMap.delete(workspaceId);
+}
+
+export function resetAllWorkspaceMetrics(): void {
+  workspaceMetricsMap.clear();
 }
 
 // ==================== RETRY LOGIC ====================
@@ -110,6 +143,7 @@ export async function processMessage(options: ProcessMessageOptions): Promise<Pr
       return await addMemory({
         userId: options.userId,
         groupId: options.groupId,
+        workspaceId: options.workspaceId,
         message: options.message,
         senderName: options.senderName,
         groupName: options.groupName,
@@ -122,6 +156,7 @@ export async function processMessage(options: ProcessMessageOptions): Promise<Pr
       return await executeQuery({
         userId: options.userId,
         groupId: options.groupId,
+        workspaceId: options.workspaceId,
         query: options.message,
         limit: 5,
         minScore: 0.3, // Filter low-relevance memories
@@ -161,8 +196,13 @@ ${memoryContext}
 
     const latencyMs = Date.now() - startTime;
 
-    // Update metrics
-    updateMetrics(true, latencyMs, totalRetries);
+    // Update metrics (global + workspace)
+    updateMetrics(true, latencyMs, totalRetries, options.workspaceId);
+
+    // Log with workspace context for observability
+    console.log(
+      `[MessageProcessor] OK | ws=${options.workspaceId || 'legacy'} grp=${options.groupId} usr=${options.userId} lat=${latencyMs}ms ret=${totalRetries}`
+    );
 
     return {
       success: true,
@@ -174,10 +214,13 @@ ${memoryContext}
     const latencyMs = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-    console.error('[MessageProcessor] Processing failed after retries:', errorMessage);
+    // Log error with workspace context
+    console.error(
+      `[MessageProcessor] FAIL | ws=${options.workspaceId || 'legacy'} grp=${options.groupId} usr=${options.userId} lat=${latencyMs}ms ret=${totalRetries} err=${errorMessage}`
+    );
 
-    // Update metrics
-    updateMetrics(false, latencyMs, totalRetries);
+    // Update metrics (global + workspace)
+    updateMetrics(false, latencyMs, totalRetries, options.workspaceId);
 
     return {
       success: false,
@@ -210,17 +253,34 @@ export function processMessageAsync(options: ProcessMessageOptions): Promise<Pro
 
 // ==================== METRICS HELPERS ====================
 
-function updateMetrics(success: boolean, latencyMs: number, retries: number): void {
+function updateMetrics(success: boolean, latencyMs: number, retries: number, workspaceId?: string): void {
+  const wsKey = workspaceId || LEGACY_WORKSPACE_KEY;
+
+  // Update global metrics
+  updateSingleMetrics(globalMetrics, success, latencyMs, retries);
+
+  // Update workspace-specific metrics
+  let wsMetrics = workspaceMetricsMap.get(wsKey);
+  if (!wsMetrics) {
+    wsMetrics = {
+      totalProcessed: 0,
+      totalFailed: 0,
+      totalRetries: 0,
+      avgLatencyMs: 0,
+    };
+    workspaceMetricsMap.set(wsKey, wsMetrics);
+  }
+  updateSingleMetrics(wsMetrics, success, latencyMs, retries);
+}
+
+function updateSingleMetrics(metrics: ProcessingMetrics, success: boolean, latencyMs: number, retries: number): void {
   if (success) {
     metrics.totalProcessed++;
-
-    // Update running average
     const totalCount = metrics.totalProcessed;
     metrics.avgLatencyMs = ((metrics.avgLatencyMs * (totalCount - 1)) + latencyMs) / totalCount;
   } else {
     metrics.totalFailed++;
   }
-
   metrics.totalRetries += retries;
   metrics.lastProcessedAt = new Date();
 }
