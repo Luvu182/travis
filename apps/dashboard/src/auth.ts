@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { z } from 'zod';
-import { authAdapter, verifyAuthUser, getAdminById } from '@jarvis/db';
+import { verifyAuthUser } from '@jarvis/db';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -9,9 +9,8 @@ const loginSchema = z.object({
 });
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: authAdapter,
   session: {
-    strategy: 'database', // Database sessions for immediate revocation
+    strategy: 'jwt', // JWT required for Credentials provider
     maxAge: 24 * 60 * 60, // 24 hours
   },
   pages: { signIn: '/login' },
@@ -38,13 +37,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
-      // With database strategy, user comes from DB (not token)
+    async jwt({ token, user }) {
+      // On sign in, add user data to token
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Transfer data from JWT to session
       if (session.user) {
-        session.user.id = user.id;
-        // Fetch role from adminUsers table (adapter doesn't include custom fields)
-        const dbUser = await getAdminById(user.id);
-        session.user.role = dbUser?.role || 'user';
+        session.user.id = token.id as string;
+        session.user.role = (token.role as 'admin' | 'user') || 'user';
       }
       return session;
     },
@@ -54,12 +59,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const isOnDashboard = pathname.startsWith('/dashboard');
       const isOnLogin = pathname === '/login';
 
-      // Redirect root to dashboard
+      // Homepage is public
       if (pathname === '/') {
-        if (isLoggedIn) {
-          return Response.redirect(new URL('/dashboard', request.nextUrl));
-        }
-        return Response.redirect(new URL('/login', request.nextUrl));
+        return true;
       }
 
       // Dashboard requires authentication

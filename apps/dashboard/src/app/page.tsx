@@ -1,5 +1,25 @@
-import { redirect } from 'next/navigation';
+import {
+  Header,
+  HeroSection,
+  FeaturesSection,
+  StatsSection,
+  AICapabilitiesSection,
+  TestimonialsSection,
+  ContactSection,
+  Footer,
+} from '@/components/landing';
 
 export default function HomePage() {
-  redirect('/dashboard');
+  return (
+    <main className="min-h-screen">
+      <Header />
+      <HeroSection />
+      <FeaturesSection />
+      <StatsSection />
+      <AICapabilitiesSection />
+      <TestimonialsSection />
+      <ContactSection />
+      <Footer />
+    </main>
+  );
 }
