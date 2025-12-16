@@ -144,9 +144,15 @@ app = FastAPI(
 
 
 # Request/Response models
+# Updated for multi-tenant workspace isolation:
+# - workspace_id: isolates memories between different workspaces (required for multi-tenant)
+# - group_id: context within workspace (run_id in mem0)
+# - user_id: individual chat user within group
+
 class AddMemoryRequest(BaseModel):
     user_id: str
     group_id: str
+    workspace_id: Optional[str] = None  # For multi-tenant isolation
     message: str
     sender_name: Optional[str] = None
     group_name: Optional[str] = None
@@ -156,6 +162,7 @@ class AddMemoryRequest(BaseModel):
 class SearchMemoryRequest(BaseModel):
     user_id: str
     group_id: str
+    workspace_id: Optional[str] = None  # For multi-tenant isolation
     query: str
     limit: int = 5
 
@@ -163,6 +170,7 @@ class SearchMemoryRequest(BaseModel):
 class GetAllMemoriesRequest(BaseModel):
     user_id: str
     group_id: str
+    workspace_id: Optional[str] = None  # For multi-tenant isolation
     limit: int = 10
 
 
@@ -178,6 +186,7 @@ class DeleteMemoryRequest(BaseModel):
 class DeleteAllMemoriesRequest(BaseModel):
     user_id: str
     group_id: str
+    workspace_id: Optional[str] = None  # For multi-tenant isolation
 
 
 class MemoryItem(BaseModel):
@@ -208,7 +217,14 @@ async def health():
 
 @app.post("/memories/add", response_model=MemoryResponse)
 async def add_memory(req: AddMemoryRequest, memory: Memory = Depends(get_memory)):
-    """Add a new memory entry."""
+    """
+    Add a new memory entry.
+
+    Multi-tenant memory scoping:
+    - agent_id = workspace_id (isolates between workspaces)
+    - run_id = group_id (context within workspace)
+    - user_id = chat user (individual user memory)
+    """
     try:
         # Parse reference date from sent_at or use now
         reference_date = datetime.now()
@@ -227,14 +243,26 @@ async def add_memory(req: AddMemoryRequest, memory: Memory = Depends(get_memory)
             "group_name": req.group_name,
             "sent_at": req.sent_at or reference_date.isoformat(),
             "original_message": req.message,
+            "workspace_id": req.workspace_id,
+            "group_id": req.group_id,
         }
 
-        result = memory.add(
-            messages,
-            user_id=req.user_id,
-            agent_id=f"group_{req.group_id}",
-            metadata=metadata,
-        )
+        # Multi-tenant scoping:
+        # - agent_id: workspace isolation (primary tenant boundary)
+        # - run_id: group context within workspace
+        # - user_id: individual user within group
+        agent_id = f"workspace_{req.workspace_id}" if req.workspace_id else f"group_{req.group_id}"
+        run_id = f"group_{req.group_id}" if req.workspace_id else None
+
+        add_kwargs = {
+            "user_id": req.user_id,
+            "agent_id": agent_id,
+            "metadata": metadata,
+        }
+        if run_id:
+            add_kwargs["run_id"] = run_id
+
+        result = memory.add(messages, **add_kwargs)
 
         return MemoryResponse(success=True, data=result if result else [])
     except Exception as e:
@@ -243,14 +271,21 @@ async def add_memory(req: AddMemoryRequest, memory: Memory = Depends(get_memory)
 
 @app.post("/memories/search", response_model=MemoryResponse)
 async def search_memories(req: SearchMemoryRequest, memory: Memory = Depends(get_memory)):
-    """Search memories by query."""
+    """Search memories by query with multi-tenant scoping."""
     try:
-        results = memory.search(
-            req.query,
-            user_id=req.user_id,
-            agent_id=f"group_{req.group_id}",
-            limit=req.limit,
-        )
+        # Multi-tenant scoping (same as add)
+        agent_id = f"workspace_{req.workspace_id}" if req.workspace_id else f"group_{req.group_id}"
+        run_id = f"group_{req.group_id}" if req.workspace_id else None
+
+        search_kwargs = {
+            "user_id": req.user_id,
+            "agent_id": agent_id,
+            "limit": req.limit,
+        }
+        if run_id:
+            search_kwargs["run_id"] = run_id
+
+        results = memory.search(req.query, **search_kwargs)
         return MemoryResponse(success=True, data=results if results else [])
     except Exception as e:
         return MemoryResponse(success=False, error=str(e))
@@ -258,13 +293,21 @@ async def search_memories(req: SearchMemoryRequest, memory: Memory = Depends(get
 
 @app.post("/memories/all", response_model=MemoryResponse)
 async def get_all_memories(req: GetAllMemoriesRequest, memory: Memory = Depends(get_memory)):
-    """Get all memories for a user/group."""
+    """Get all memories for a user/group with multi-tenant scoping."""
     try:
-        memories = memory.get_all(
-            user_id=req.user_id,
-            agent_id=f"group_{req.group_id}",
-            limit=req.limit,
-        )
+        # Multi-tenant scoping
+        agent_id = f"workspace_{req.workspace_id}" if req.workspace_id else f"group_{req.group_id}"
+        run_id = f"group_{req.group_id}" if req.workspace_id else None
+
+        get_kwargs = {
+            "user_id": req.user_id,
+            "agent_id": agent_id,
+            "limit": req.limit,
+        }
+        if run_id:
+            get_kwargs["run_id"] = run_id
+
+        memories = memory.get_all(**get_kwargs)
         return MemoryResponse(success=True, data=memories if memories else [])
     except Exception as e:
         return MemoryResponse(success=False, error=str(e))
@@ -292,12 +335,20 @@ async def delete_memory(req: DeleteMemoryRequest, memory: Memory = Depends(get_m
 
 @app.post("/memories/delete-all", response_model=MemoryResponse)
 async def delete_all_memories(req: DeleteAllMemoriesRequest, memory: Memory = Depends(get_memory)):
-    """Delete all memories for a user/group."""
+    """Delete all memories for a user/group with multi-tenant scoping."""
     try:
-        memory.delete_all(
-            user_id=req.user_id,
-            agent_id=f"group_{req.group_id}",
-        )
+        # Multi-tenant scoping
+        agent_id = f"workspace_{req.workspace_id}" if req.workspace_id else f"group_{req.group_id}"
+        run_id = f"group_{req.group_id}" if req.workspace_id else None
+
+        delete_kwargs = {
+            "user_id": req.user_id,
+            "agent_id": agent_id,
+        }
+        if run_id:
+            delete_kwargs["run_id"] = run_id
+
+        memory.delete_all(**delete_kwargs)
         return MemoryResponse(success=True)
     except Exception as e:
         return MemoryResponse(success=False, error=str(e))
