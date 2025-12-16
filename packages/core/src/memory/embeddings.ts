@@ -2,14 +2,11 @@ import { google } from '@ai-sdk/google';
 import { embed } from 'ai';
 import { env } from '@luxbot/config';
 
-// Gemini embedding model (text-embedding-004 produces 768D embeddings)
-// Note: Gemini embedding-004 is 768D, not 1536D as originally planned
-// We'll use this for now and update schema if needed
-
+// Gemini embedding-001 produces 1536D embeddings (matches schema)
 /**
- * Generate embedding for a single text using Gemini text-embedding-004
+ * Generate embedding for a single text using Gemini embedding-001
  * @param text Text to embed
- * @returns 768-dimensional embedding vector
+ * @returns 1536-dimensional embedding vector
  */
 export async function embedText(text: string): Promise<number[]> {
   if (!text || text.trim().length === 0) {
@@ -18,7 +15,7 @@ export async function embedText(text: string): Promise<number[]> {
 
   try {
     const { embedding } = await embed({
-      model: google.textEmbeddingModel('text-embedding-004') as any,
+      model: google.textEmbeddingModel('embedding-001') as any,
       value: text,
     });
 

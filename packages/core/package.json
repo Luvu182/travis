@@ -1,0 +1,25 @@
+{
+  "name": "@luxbot/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "node --test src/memory/__tests__/unit.test.js",
+    "test:schema": "node --test src/memory/__tests__/schema-validation.test.js",
+    "test:all": "node --test src/memory/__tests__/{unit,schema-validation}.test.js"
+  },
+  "dependencies": {
+    "@mem0/vercel-ai-provider": "^0.0.7",
+    "ai": "^4.0.0",
+    "@ai-sdk/google": "^2.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "zod": "^3.23.0",
+    "@luxbot/db": "workspace:*",
+    "@luxbot/config": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

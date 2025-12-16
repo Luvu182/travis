@@ -80,7 +80,7 @@ Message: ${message}${contextStr}`;
 
   try {
     const { text } = await generateText({
-      model: google('gemini-2.0-flash-exp') as any,
+      model: google('gemini-2.5-flash-lite') as any,
       system: EXTRACTION_PROMPT,
       prompt,
       temperature: 0.1,
