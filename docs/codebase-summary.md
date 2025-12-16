@@ -1,4 +1,4 @@
-# LuxBot - Codebase Summary
+# Travis - Codebase Summary
 
 **Last Updated:** 2025-12-16
 **Phase:** 04 - LLM Integration Completion
@@ -6,12 +6,12 @@
 
 ## Project Overview
 
-LuxBot is a Vietnamese executive assistant chatbot with long-term memory capabilities, designed for multi-platform deployment (Telegram and Lark Suite). The system leverages AI-powered information extraction and semantic search through PostgreSQL vector embeddings.
+Travis is a Vietnamese executive assistant chatbot with long-term memory capabilities, designed for multi-platform deployment (Telegram and Lark Suite). The system leverages AI-powered information extraction and semantic search through PostgreSQL vector embeddings.
 
 ## Architecture
 
 ```
-LuxBot (Monorepo)
+Travis (Monorepo)
 ├── apps/
 │   └── api/              # Hono API server (TypeScript)
 ├── packages/
@@ -60,7 +60,7 @@ Used by: `extractedInfo`
 ### Core Tables
 
 #### 1. `groups` - Multi-platform Chat Groups
-Represents Telegram groups or Lark suites integrated with LuxBot.
+Represents Telegram groups or Lark suites integrated with Travis.
 
 | Column | Type | Constraints | Purpose |
 |--------|------|-----------|---------|

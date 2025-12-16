@@ -1,4 +1,4 @@
-# LuxBot - Code Standards & Architecture
+# Travis - Code Standards & Architecture
 
 **Last Updated:** 2025-12-16
 **Phase:** 03 - Memory Layer Implementation
@@ -23,7 +23,7 @@
 ### Organization Pattern (Turborepo)
 
 ```
-luxbot/
+travis/
 ├── apps/
 │   └── api/                    # Hono API server
 │       ├── src/
@@ -726,4 +726,4 @@ const combined = await multiSearch(['query1', 'query2'], { limit: 5 });
 
 ---
 
-*Code standards and architectural patterns for LuxBot Phase 03: Memory Layer*
+*Code standards and architectural patterns for Travis Phase 03: Memory Layer*

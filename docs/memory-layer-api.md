@@ -1,4 +1,4 @@
-# LuxBot - Memory Layer API Documentation
+# Travis - Memory Layer API Documentation
 
 **Last Updated:** 2025-12-16
 **Phase:** 03 - Memory Layer Implementation

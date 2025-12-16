@@ -1,6 +1,6 @@
-# LuxBot Documentation
+# Travis Documentation
 
-Complete documentation for the LuxBot Vietnamese Executive Assistant Chatbot project. All documentation for Phase 02: Database Schema Completion.
+Complete documentation for the Travis Vietnamese Executive Assistant Chatbot project. All documentation for Phase 02: Database Schema Completion.
 
 ## Documentation Structure
 

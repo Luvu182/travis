@@ -1,4 +1,4 @@
-# LuxBot - Project Overview & PDR (Product Development Requirements)
+# Travis - Project Overview & PDR (Product Development Requirements)
 
 **Document Version:** 1.0
 **Status:** Phase 02 Complete
@@ -6,7 +6,7 @@
 
 ## Project Vision
 
-LuxBot is an AI-powered Vietnamese executive assistant chatbot with long-term memory, designed for seamless integration with Telegram and Lark Suite. The system extracts actionable intelligence from group conversations, maintains persistent context, and provides intelligent responses informed by historical context.
+Travis is an AI-powered Vietnamese executive assistant chatbot with long-term memory, designed for seamless integration with Telegram and Lark Suite. The system extracts actionable intelligence from group conversations, maintains persistent context, and provides intelligent responses informed by historical context.
 
 ### Core Value Proposition
 - **Automatic Task Extraction:** Convert conversations into structured tasks with assignees and deadlines
@@ -502,4 +502,4 @@ LuxBot is an AI-powered Vietnamese executive assistant chatbot with long-term me
 
 ---
 
-*LuxBot Project Overview & PDR - Phase 02: Database Schema Completion*
+*Travis Project Overview & PDR - Phase 02: Database Schema Completion*

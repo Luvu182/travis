@@ -1,4 +1,4 @@
-# LuxBot - Core API Documentation
+# Travis - Core API Documentation
 
 **Last Updated:** 2025-12-16
 **Phase:** 03 - Memory Layer Implementation

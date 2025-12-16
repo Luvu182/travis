@@ -248,7 +248,7 @@ try {
 ## Environment
 
 ```env
-DATABASE_URL=postgresql://user:pass@localhost:5432/luxbot
+DATABASE_URL=postgresql://user:pass@localhost:5432/travis
 NODE_ENV=production  # 20-connection pool
 # or
 NODE_ENV=development # 1-connection for dev

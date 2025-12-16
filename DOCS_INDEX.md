@@ -1,4 +1,4 @@
-# LuxBot Documentation Index
+# Travis Documentation Index
 
 **Quick Navigation | Phase 02: Database Schema Completion**
 
@@ -91,7 +91,7 @@ Begin with `/docs/README.md` for the complete documentation guide and quick star
 ## File Organization
 
 ```
-/var/www/LuxBot/
+/var/www/Travis/
 ├── docs/                           # Core documentation
 │   ├── README.md                  # Documentation guide (START HERE)
 │   ├── codebase-summary.md        # Technical overview

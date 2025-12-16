@@ -90,7 +90,7 @@ node --test src/llm/__tests__/performance.bench.ts
 
 ### In Monorepo
 ```bash
-cd /var/www/LuxBot
+cd /var/www/Travis
 pnpm install
 cd packages/core
 node --test src/llm/__tests__/unit.test.js

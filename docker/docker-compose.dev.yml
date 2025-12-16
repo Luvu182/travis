@@ -3,11 +3,11 @@ version: '3.8'
 services:
   postgres:
     image: ankane/pgvector:latest
-    container_name: luxbot-postgres-dev
+    container_name: travis-postgres-dev
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: luxbot_dev_secure_pass_2024
-      POSTGRES_DB: luxbot
+      POSTGRES_PASSWORD: travis_dev_secure_pass_2024
+      POSTGRES_DB: travis
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

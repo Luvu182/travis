@@ -5,7 +5,7 @@
 
 ## Overview
 
-Phase 03 implements the complete memory layer for LuxBot, enabling semantic understanding and persistent memory management through embeddings, extraction, storage, and retrieval systems.
+Phase 03 implements the complete memory layer for Travis, enabling semantic understanding and persistent memory management through embeddings, extraction, storage, and retrieval systems.
 
 ## Core Components
 
