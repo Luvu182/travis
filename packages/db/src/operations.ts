@@ -425,3 +425,52 @@ export async function getAllGroups() {
     .from(groups)
     .orderBy(desc(groups.createdAt));
 }
+
+// ==================== OAUTH USER OPERATIONS ====================
+
+export async function findOrCreateOAuthUser(data: {
+  email: string;
+  name?: string | null;
+  image?: string | null;
+  provider: string;
+  providerAccountId: string;
+}): Promise<{ id: string; email: string; name: string | null; role: 'admin' | 'user'; isActive: boolean }> {
+  // Try to find existing user by email
+  const existing = await db
+    .select({
+      id: adminUsers.id,
+      email: adminUsers.email,
+      name: adminUsers.name,
+      role: adminUsers.role,
+      isActive: adminUsers.isActive,
+    })
+    .from(adminUsers)
+    .where(eq(adminUsers.email, data.email.toLowerCase()))
+    .limit(1);
+
+  if (existing[0]) {
+    // Update last login
+    await updateLastLogin(existing[0].id);
+    return existing[0];
+  }
+
+  // Create new user (OAuth users don't need password)
+  const result = await db
+    .insert(adminUsers)
+    .values({
+      email: data.email.toLowerCase(),
+      name: data.name,
+      role: 'user', // Default role for OAuth users
+      isActive: true,
+      passwordHash: null, // OAuth users don't have password
+    })
+    .returning({
+      id: adminUsers.id,
+      email: adminUsers.email,
+      name: adminUsers.name,
+      role: adminUsers.role,
+      isActive: adminUsers.isActive,
+    });
+
+  return result[0];
+}

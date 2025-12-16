@@ -1,7 +1,8 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+import Google from 'next-auth/providers/google';
 import { z } from 'zod';
-import { verifyAuthUser } from '@jarvis/db';
+import { verifyAuthUser, findOrCreateOAuthUser } from '@jarvis/db';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -15,6 +16,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: { signIn: '/login' },
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     Credentials({
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -37,6 +42,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      // Handle OAuth sign in - create/update user in database
+      if (account?.provider === 'google' && user.email) {
+        const dbUser = await findOrCreateOAuthUser({
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
+        });
+        // Attach db user data to the user object
+        user.id = dbUser.id;
+        user.role = dbUser.role;
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       // On sign in, add user data to token
       if (user) {
