@@ -10,6 +10,7 @@ import {
   uniqueIndex,
   index,
   vector,
+  boolean,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -81,6 +82,51 @@ export const queryLogs = pgTable('query_logs', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
+// ==================== ADMIN AUTH TABLES ====================
+
+// Admin users table (for dashboard authentication)
+export const adminUsers = pgTable('admin_users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  displayName: varchar('display_name', { length: 255 }),
+  role: varchar('role', { length: 50 }).notNull().default('admin'),
+  isActive: boolean('is_active').notNull().default(true),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  emailIdx: uniqueIndex('idx_admin_users_email').on(table.email),
+}));
+
+// Refresh tokens table (for JWT refresh token management)
+export const refreshTokens = pgTable('refresh_tokens', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => adminUsers.id, { onDelete: 'cascade' }),
+  tokenHash: varchar('token_hash', { length: 255 }).notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  tokenHashIdx: index('idx_refresh_tokens_hash').on(table.tokenHash),
+  userIdx: index('idx_refresh_tokens_user').on(table.userId),
+}));
+
+// ==================== METRICS TABLES ====================
+
+// Metrics history table (for dashboard analytics)
+export const metricsHistory = pgTable('metrics_history', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  metricName: varchar('metric_name', { length: 100 }).notNull(),
+  metricType: varchar('metric_type', { length: 50 }).notNull(), // gauge, counter, histogram
+  value: varchar('value', { length: 50 }).notNull(),
+  labels: jsonb('labels').default({}),
+  timestamp: timestamp('timestamp', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  nameTimestampIdx: index('idx_metrics_name_timestamp').on(table.metricName, table.timestamp),
+  timestampIdx: index('idx_metrics_timestamp').on(table.timestamp),
+}));
+
 // ==================== TYPE EXPORTS ====================
 
 export type Group = typeof groups.$inferSelect;
@@ -94,3 +140,12 @@ export type NewMessage = typeof messages.$inferInsert;
 
 export type QueryLog = typeof queryLogs.$inferSelect;
 export type NewQueryLog = typeof queryLogs.$inferInsert;
+
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type NewAdminUser = typeof adminUsers.$inferInsert;
+
+export type RefreshToken = typeof refreshTokens.$inferSelect;
+export type NewRefreshToken = typeof refreshTokens.$inferInsert;
+
+export type MetricsHistory = typeof metricsHistory.$inferSelect;
+export type NewMetricsHistory = typeof metricsHistory.$inferInsert;

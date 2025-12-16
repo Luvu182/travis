@@ -30,10 +30,13 @@ import { extractRoutes } from './routes/extract.js';
 import { searchRoutes } from './routes/search.js';
 import { queryRoutes } from './routes/query.js';
 import { metricsRoutes } from './routes/metrics.js';
+import { authRoutes } from './routes/auth.js';
+import { dashboardMetricsRoutes } from './routes/dashboard-metrics.js';
 import { telegramWebhook } from './webhooks/telegram.js';
 import { larkWebhook } from './webhooks/lark.js';
 import { errorHandler } from './middleware/error.js';
 import { rateLimiter, userGroupKeyGenerator } from './middleware/rate-limit.js';
+import { dashboardAuthMiddleware } from './middleware/dashboard-auth.js';
 
 const app = new Hono();
 
@@ -64,6 +67,13 @@ app.route('/api/query', queryRoutes);
 // Webhook routes (no rate limiting - handled by platforms)
 app.route('/webhook/telegram', telegramWebhook);
 app.route('/webhook/lark', larkWebhook);
+
+// Dashboard auth routes (no rate limiting for login/logout)
+app.route('/api/auth', authRoutes);
+
+// Dashboard metrics routes (protected by auth)
+app.use('/api/dashboard/*', dashboardAuthMiddleware);
+app.route('/api/dashboard', dashboardMetricsRoutes);
 
 // Start server
 const port = Number(env.PORT);

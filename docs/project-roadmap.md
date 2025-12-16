@@ -448,7 +448,7 @@ Next.js 15 monitoring dashboard for memory management and analytics.
   - Tailwind v4 via @tailwindcss/postcss plugin
   - shadcn/ui configured (New York style, RSC-compatible, @ alias)
   - Theme provider with dark mode (system + manual toggle)
-  - Monorepo integration with workspace dependencies (@travis/config)
+  - Monorepo integration with workspace dependencies (@jarvis/config)
   - Turbo build tasks configured for dashboard (build, dev, lint)
   - Core UI components installed: button, card, input, label, form, select, switch, tabs, dialog, dropdown-menu, separator, skeleton, table, badge, toast, sonner
   - next-themes integration for theme management
@@ -462,13 +462,13 @@ Next.js 15 monitoring dashboard for memory management and analytics.
 - **Phase 09 Completed**: Deployment - Docker Compose production setup
   - apps/api/Dockerfile: Multi-stage build (builder + runner stages, 84 lines)
   - Builder stage: Node 20-alpine, pnpm 9.14.0, frozen lockfile, full monorepo build
-  - Runner stage: Production deps only, non-root user (travis:1001), minimal image
+  - Runner stage: Production deps only, non-root user (jarvis:1001), minimal image
   - docker-compose.yml: Production orchestration with postgres + api (100 lines)
   - PostgreSQL 16 with pgvector (ankane/pgvector:latest image)
   - Health checks: API (30s interval, 3 retries), Postgres (5s interval, 5 retries)
   - Environment validation: Required vars enforced with :? syntax
   - Persistent volumes: postgres_data with local driver
-  - Network isolation: travis-network bridge driver
+  - Network isolation: jarvis-network bridge driver
   - Security: Non-root execution, no secrets in Dockerfile, minimal attack surface
   - Log rotation: 10MB max size, 3 files retention (json-file driver)
   - Auto-restart: unless-stopped policy for resilience
@@ -556,7 +556,7 @@ Next.js 15 monitoring dashboard for memory management and analytics.
   - Removed embeddings.ts (mem0 handles internally)
   - Removed extractedInfo + memories tables from schema (mem0 manages own tables)
   - Removed ~300 lines of obsolete operations
-  - Fixed package imports: @luxbot/* → @travis/*
+  - Fixed package imports: @luxbot/* → @jarvis/*
   - Ready for Phase 05 (Telegram Bot)
 
 - **Phase 02 Completed**: Database schema fully implemented with Drizzle ORM and pgvector

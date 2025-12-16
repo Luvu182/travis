@@ -109,7 +109,7 @@ function addMemory(params: {
 
 **Usage:**
 ```typescript
-import { addMemory } from '@travis/core';
+import { addMemory } from '@jarvis/core';
 
 await addMemory({
   userId: 'user-123',
@@ -302,7 +302,7 @@ export async function extractAndStore(params) {
 
 **Usage:**
 ```typescript
-import { extractAndStore } from '@travis/core';
+import { extractAndStore } from '@jarvis/core';
 
 await extractAndStore({
   userId: 'user-123',
@@ -405,7 +405,7 @@ function storeMessage(params: {
 
 **Usage:**
 ```typescript
-import { storeMessage } from '@travis/core';
+import { storeMessage } from '@jarvis/core';
 
 await storeMessage({
   platformMessageId: 'telegram-msg-123',
@@ -531,7 +531,7 @@ import {
   searchRelevantMemories,
   formatMemoriesForPrompt,
   storeMessage,
-} from '@travis/core';
+} from '@jarvis/core';
 
 async function processMessage(
   message: string,
@@ -582,7 +582,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=xxx
-DB_NAME=luxbot
+DB_NAME=jarvis
 
 # Database URL (for Drizzle ORM)
 DATABASE_URL=postgresql://user:pass@host/db

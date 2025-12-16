@@ -1,4 +1,4 @@
-# Travis - System Architecture
+# J.A.R.V.I.S - System Architecture
 
 **Last Updated:** 2025-12-16
 **Phase:** 04 - LLM Integration Completion
@@ -6,7 +6,7 @@
 
 ## Architecture Overview
 
-Travis is a modular, horizontally-scalable system designed for multi-platform chatbot deployment with persistent long-term memory capabilities.
+J.A.R.V.I.S is a modular, horizontally-scalable system designed for multi-platform chatbot deployment with persistent long-term memory capabilities.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -562,7 +562,7 @@ OPENAI_API_KEY=xxx
 
 # Deployment
 NODE_ENV=production|development
-WEBHOOK_DOMAIN=https://travis.example.com
+WEBHOOK_DOMAIN=https://jarvis.example.com
 ```
 
 ### Database Configuration

@@ -3,11 +3,11 @@ version: '3.8'
 services:
   postgres:
     image: ankane/pgvector:latest
-    container_name: travis-postgres-dev
+    container_name: jarvis-postgres-dev
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: travis_dev_secure_pass_2024
-      POSTGRES_DB: travis
+      POSTGRES_PASSWORD: jarvis_dev_secure_pass_2024
+      POSTGRES_DB: jarvis
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

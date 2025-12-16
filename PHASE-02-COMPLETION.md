@@ -135,7 +135,7 @@ Total: ~720 lines of production code
 ## Environment Configuration
 
 ```env
-DATABASE_URL=postgresql://user:password@host:5432/travis_db
+DATABASE_URL=postgresql://user:password@host:5432/jarvis
 NODE_ENV=production|development
 ```
 
@@ -240,11 +240,11 @@ pnpm db:migrate     # Run migrations in order
 
 ## Documentation Files
 
-- **Main Plan:** `/var/www/Travis/plans/251216-0515-executive-assistant-chatbot/plan.md`
-- **Phase Document:** `/var/www/Travis/plans/251216-0515-executive-assistant-chatbot/phase-02-database-schema.md`
-- **Completion Report:** `/var/www/Travis/plans/reports/project-manager-phase-02-completion-summary.md`
-- **Project Roadmap:** `/var/www/Travis/docs/project-roadmap.md`
-- **Status Report:** `/var/www/Travis/plans/reports/project-status-2025-12-16.md`
+- **Main Plan:** `/var/www/jarvis/plans/251216-0515-executive-assistant-chatbot/plan.md`
+- **Phase Document:** `/var/www/jarvis/plans/251216-0515-executive-assistant-chatbot/phase-02-database-schema.md`
+- **Completion Report:** `/var/www/jarvis/plans/reports/project-manager-phase-02-completion-summary.md`
+- **Project Roadmap:** `/var/www/jarvis/docs/project-roadmap.md`
+- **Status Report:** `/var/www/jarvis/plans/reports/project-status-2025-12-16.md`
 
 ---
 

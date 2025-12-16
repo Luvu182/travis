@@ -1,7 +1,7 @@
 # Phase 03: Memory Layer Implementation - Test Report
 
 **Date**: 2025-12-16
-**Package**: @travis/core
+**Package**: @jarvis/core
 **Test Suite**: Memory Layer (Embeddings, Extraction, Storage, Retrieval)
 **Status**: ✅ **ALL TESTS PASSED**
 

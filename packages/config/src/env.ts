@@ -33,6 +33,11 @@ const envSchema = z.object({
   DB_USER: z.string().default('postgres'),
   DB_PASSWORD: z.string(),
   DB_NAME: z.string().default('jarvis'),
+
+  // Dashboard Auth (JWT)
+  JWT_SECRET: z.string().min(32).default('change-me-in-production-min-32-chars'),
+  JWT_REFRESH_SECRET: z.string().min(32).default('change-me-refresh-secret-32-chars'),
+  DASHBOARD_URL: z.string().url().default('http://localhost:3001'),
 });
 
 export type Env = z.infer<typeof envSchema>;

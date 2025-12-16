@@ -63,7 +63,7 @@ docker-compose*.yml
 # CI/CD
 .github/
 .gitlab-ci.yml
-.travis.yml
+# Removed: .travis.yml (not using Travis CI)
 
 # Misc
 .claude/

@@ -5,7 +5,7 @@
 
 ## Overview
 
-Phase 03 implements the complete memory layer for Travis, enabling semantic understanding and persistent memory management through embeddings, extraction, storage, and retrieval systems.
+Phase 03 implements the complete memory layer for J.A.R.V.I.S, enabling semantic understanding and persistent memory management through embeddings, extraction, storage, and retrieval systems.
 
 ## Core Components
 
@@ -297,7 +297,7 @@ const combined = await multiSearch([
 - `@ai-sdk/google` - Google AI SDK
 - `ai` - Vercel AI SDK
 - `zod` - Schema validation
-- `@travis/db` - Database operations
+- `@jarvis/db` - Database operations
 
 ### Model Requirements
 - Gemini API key (GEMINI_API_KEY)
