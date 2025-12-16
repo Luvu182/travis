@@ -5,8 +5,21 @@ import { Brain, Database, CloudUpload } from 'lucide-react';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { dashboardAPI } from '@/lib/api';
 
+interface MemoryConsumer {
+  name: string;
+  count: number;
+}
+
+interface MemoryData {
+  vectorStoreSize: { formatted: string };
+  embeddingCount: number;
+  storageUsed: { formatted: string };
+  growthTrend: { daily: number; weekly: number };
+  topConsumers: MemoryConsumer[];
+}
+
 export default function MemoryPage() {
-  const [memory, setMemory] = useState<any>(null);
+  const [memory, setMemory] = useState<MemoryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -71,9 +84,9 @@ export default function MemoryPage() {
 
         <div className="rounded-lg border bg-card p-4 shadow-sm">
           <h3 className="text-base font-semibold mb-4">Top Consumers</h3>
-          {memory?.topConsumers?.length > 0 ? (
+          {memory && memory.topConsumers && memory.topConsumers.length > 0 ? (
             <div className="space-y-3">
-              {memory.topConsumers.map((consumer: any, i: number) => (
+              {memory.topConsumers.map((consumer: MemoryConsumer, i: number) => (
                 <div key={i} className="flex justify-between items-center">
                   <span className="truncate max-w-[200px]">{consumer.name}</span>
                   <span className="text-muted-foreground">{consumer.count} memories</span>

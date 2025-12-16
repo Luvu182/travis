@@ -4,8 +4,19 @@ import { useEffect, useState } from 'react';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { dashboardAPI } from '@/lib/api';
 
+interface PerformanceData {
+  requestRate: number;
+  responseTime: { p50: number; p95: number; p99: number };
+  errorRate: { '4xx': number; '5xx': number };
+  systemMetrics: {
+    cpuUsage: number;
+    memoryUsage: { percentage: number };
+  };
+  throughput: number;
+}
+
 export default function PerformancePage() {
-  const [performance, setPerformance] = useState<any>(null);
+  const [performance, setPerformance] = useState<PerformanceData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

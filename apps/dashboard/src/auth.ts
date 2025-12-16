@@ -1,13 +1,20 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { z } from 'zod';
+import { authAdapter, verifyAuthUser, getAdminById } from '@jarvis/db';
 
 const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(8).max(72),
 });
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: authAdapter,
+  session: {
+    strategy: 'database', // Database sessions for immediate revocation
+    maxAge: 24 * 60 * 60, // 24 hours
+  },
+  pages: { signIn: '/login' },
   providers: [
     Credentials({
       credentials: {
@@ -16,42 +23,61 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         const parsed = loginSchema.safeParse(credentials);
-        if (!parsed.success) {
-          return null;
-        }
+        if (!parsed.success) return null;
 
-        const { email, password } = parsed.data;
+        const user = await verifyAuthUser(parsed.data.email, parsed.data.password);
+        if (!user) return null;
 
-        // Check against environment variables for admin credentials
-        const adminEmail = process.env.DASHBOARD_ADMIN_EMAIL || 'admin@jarvis.local';
-        const adminPassword = process.env.DASHBOARD_ADMIN_PASSWORD || 'jarvis2024!';
-
-        if (email === adminEmail && password === adminPassword) {
-          return {
-            id: '1',
-            name: 'Admin',
-            email: adminEmail,
-          };
-        }
-
-        return null;
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
       },
     }),
   ],
-  pages: {
-    signIn: '/login',
-  },
   callbacks: {
+    async session({ session, user }) {
+      // With database strategy, user comes from DB (not token)
+      if (session.user) {
+        session.user.id = user.id;
+        // Fetch role from adminUsers table (adapter doesn't include custom fields)
+        const dbUser = await getAdminById(user.id);
+        session.user.role = dbUser?.role || 'user';
+      }
+      return session;
+    },
     async authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
-      const isOnDashboard = request.nextUrl.pathname.startsWith('/dashboard');
-      const isOnLogin = request.nextUrl.pathname === '/login';
+      const pathname = request.nextUrl.pathname;
+      const isOnDashboard = pathname.startsWith('/dashboard');
+      const isOnLogin = pathname === '/login';
 
-      if (isOnDashboard) {
-        if (isLoggedIn) return true;
-        return false; // Redirect to login
+      // Redirect root to dashboard
+      if (pathname === '/') {
+        if (isLoggedIn) {
+          return Response.redirect(new URL('/dashboard', request.nextUrl));
+        }
+        return Response.redirect(new URL('/login', request.nextUrl));
       }
 
+      // Dashboard requires authentication
+      if (isOnDashboard) {
+        if (!isLoggedIn) return false;
+
+        // Admin-only routes
+        const adminRoutes = ['/dashboard/settings'];
+        const requiresAdmin = adminRoutes.some((route) => pathname.startsWith(route));
+
+        if (requiresAdmin && auth?.user?.role !== 'admin') {
+          return Response.redirect(new URL('/dashboard?error=unauthorized', request.nextUrl));
+        }
+
+        return true;
+      }
+
+      // Redirect logged-in users from login page
       if (isOnLogin && isLoggedIn) {
         return Response.redirect(new URL('/dashboard', request.nextUrl));
       }
@@ -59,12 +85,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return true;
     },
   },
-  session: {
-    strategy: 'jwt',
-    maxAge: 24 * 60 * 60, // 24 hours
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production'
+        ? '__Secure-authjs.session-token'
+        : 'authjs.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   trustHost: true,
 });
 
-// Type extensions - NextAuth v5 uses inline types
-// The role is stored in token and added to session via callbacks
+// Type augmentation
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name?: string | null;
+      image?: string | null;
+      role: 'admin' | 'user';
+    };
+  }
+
+  interface User {
+    role?: 'admin' | 'user';
+  }
+}

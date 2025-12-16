@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Lock, Mail, Loader2 } from 'lucide-react';
+import { Lock, Mail, Loader2, AlertTriangle } from 'lucide-react';
+import { login } from './actions';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,11 +11,13 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isRateLimited, setIsRateLimited] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setIsRateLimited(false);
 
     // Basic validation
     if (!email || !email.includes('@')) {
@@ -30,19 +32,18 @@ export default function LoginPage() {
     }
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
+      const result = await login(email, password);
 
-      if (result?.error) {
-        setError('Invalid email or password');
+      if (result.rateLimited) {
+        setIsRateLimited(true);
+        setError(result.error || 'Too many login attempts');
+      } else if (!result.success) {
+        setError(result.error || 'Invalid email or password');
       } else {
         router.push('/dashboard');
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -61,8 +62,13 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-md">
-              {error}
+            <div className={`p-3 text-sm rounded-md flex items-start gap-2 ${
+              isRateLimited
+                ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400'
+                : 'text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400'
+            }`}>
+              {isRateLimited && <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />}
+              <span>{error}</span>
             </div>
           )}
 

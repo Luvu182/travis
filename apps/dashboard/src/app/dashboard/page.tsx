@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
   Wifi,
   Clock,
@@ -35,10 +35,8 @@ export default function DashboardPage() {
     setLoading,
   } = useMetricsStore();
 
-  const [sseEnabled, setSseEnabled] = useState(true);
-
   // SSE for real-time updates
-  const { isConnected, lastMetrics } = useSSE(
+  const { isConnected } = useSSE(
     `${API_URL}/api/dashboard/stream`,
     {
       onMetrics: (metrics) => {
@@ -85,9 +83,43 @@ export default function DashboardPage() {
           dashboardAPI.getConversations(),
           dashboardAPI.getPerformance(),
         ]);
-        setHealth(healthData);
-        setConversations(convData);
-        setPerformance(perfData);
+        // Transform API response to store types
+        setHealth({
+          status: healthData.status as 'online' | 'offline' | 'degraded',
+          uptime: {
+            ms: healthData.uptimeMs,
+            hours: Math.round((healthData.uptimeMs / (1000 * 60 * 60)) * 100) / 100,
+            percentage: 99.9,
+          },
+          lastPing: healthData.lastPing,
+          platforms: {},
+          errorRate: 0,
+        });
+        setConversations({
+          totalConversations: convData.total,
+          activeUsers: {
+            '1h': convData.active,
+            '24h': convData.active,
+            '7d': convData.active,
+          },
+          messagesPerMinute: convData.messagesPerMin,
+          avgResponseTimeMs: perfData.responseTime.p50,
+          uniqueGroups: 0,
+        });
+        setPerformance({
+          requestRate: perfData.requestRate,
+          responseTime: perfData.responseTime,
+          errorRate: perfData.errorRate,
+          throughput: perfData.throughput,
+          systemMetrics: {
+            cpuUsage: perfData.systemMetrics.cpuUsage,
+            memoryUsage: {
+              used: 0,
+              total: 0,
+              percentage: perfData.systemMetrics.memoryUsage.percentage,
+            },
+          },
+        });
         addRequestRatePoint(perfData.requestRate);
         addLatencyPoint(perfData.responseTime.p50);
       } catch (error) {

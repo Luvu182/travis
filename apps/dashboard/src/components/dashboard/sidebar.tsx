@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   MessageSquare,
+  MessageCircle,
   Brain,
   Gauge,
   Settings,
@@ -16,6 +17,7 @@ import { useUIStore } from '@/stores/ui';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
+  { href: '/dashboard/chat', icon: MessageCircle, label: 'Chat' },
   { href: '/dashboard/conversations', icon: MessageSquare, label: 'Conversations' },
   { href: '/dashboard/memory', icon: Brain, label: 'Memory' },
   { href: '/dashboard/performance', icon: Gauge, label: 'Performance' },

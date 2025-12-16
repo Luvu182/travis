@@ -29,26 +29,82 @@ async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(`API error: ${res.status}`);
   }
 
-  return res.json();
+  return res.json() as Promise<T>;
+}
+
+// API response types
+interface HealthResponse {
+  status: string;
+  uptimeMs: number;
+  lastPing: string;
+}
+
+interface ConversationsResponse {
+  total: number;
+  active: number;
+  messagesPerMin: number;
+}
+
+interface PerformanceResponse {
+  requestRate: number;
+  responseTime: { p50: number; p95: number; p99: number };
+  errorRate: { '4xx': number; '5xx': number };
+  systemMetrics: { cpuUsage: number; memoryUsage: { percentage: number } };
+  throughput: number;
+}
+
+interface MemoryResponse {
+  vectorStoreSize: { formatted: string };
+  embeddingCount: number;
+  storageUsed: { formatted: string };
+  growthTrend: { daily: number; weekly: number };
+  topConsumers: { name: string; count: number }[];
+}
+
+interface GroupsResponse {
+  groups: { id: string; name: string; memberCount: number }[];
+}
+
+interface ConversationItem {
+  id: string;
+  content: string;
+  createdAt: string;
+  groupName: string | null;
+  userName: string | null;
+  platform: string;
+}
+
+interface ConversationHistoryResponse {
+  data: ConversationItem[];
+  pagination: {
+    total: number;
+    hasMore: boolean;
+    offset: number;
+    limit: number;
+  };
+}
+
+interface MetricsHistoryResponse {
+  data: { timestamp: string; value: number }[];
 }
 
 export const dashboardAPI = {
-  getHealth: () => fetchAPI<any>('/api/dashboard/health'),
+  getHealth: () => fetchAPI<HealthResponse>('/api/dashboard/health'),
 
   getConversations: (period: string = '24h') =>
-    fetchAPI<any>(`/api/dashboard/conversations?period=${period}`),
+    fetchAPI<ConversationsResponse>(`/api/dashboard/conversations?period=${period}`),
 
-  getPerformance: () => fetchAPI<any>('/api/dashboard/performance'),
+  getPerformance: () => fetchAPI<PerformanceResponse>('/api/dashboard/performance'),
 
-  getMemory: () => fetchAPI<any>('/api/dashboard/memory'),
+  getMemory: () => fetchAPI<MemoryResponse>('/api/dashboard/memory'),
 
-  getGroups: () => fetchAPI<any>('/api/dashboard/groups'),
+  getGroups: () => fetchAPI<GroupsResponse>('/api/dashboard/groups'),
 
   getConversationHistory: (params: { limit?: number; offset?: number }) =>
-    fetchAPI<any>(
+    fetchAPI<ConversationHistoryResponse>(
       `/api/dashboard/conversations/history?limit=${params.limit || 50}&offset=${params.offset || 0}`
     ),
 
   getMetricsHistory: (metric: string, range: string) =>
-    fetchAPI<any>(`/api/dashboard/metrics/history?metric=${metric}&range=${range}`),
+    fetchAPI<MetricsHistoryResponse>(`/api/dashboard/metrics/history?metric=${metric}&range=${range}`),
 };
