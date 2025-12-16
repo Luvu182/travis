@@ -11,14 +11,15 @@
   "dependencies": {
     "@hono/node-server": "^1.13.0",
     "@hono/zod-validator": "^0.7.5",
-    "@larksuiteoapi/node-sdk": "^1.28.0",
     "@jarvis/config": "workspace:*",
     "@jarvis/core": "workspace:*",
     "@jarvis/db": "workspace:*",
+    "@larksuiteoapi/node-sdk": "^1.28.0",
     "dotenv": "^16.4.0",
     "drizzle-orm": "^0.36.0",
     "grammy": "^1.21.0",
     "hono": "^4.6.0",
+    "jose": "^5.2.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
