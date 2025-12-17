@@ -156,11 +156,11 @@ Bạn là bộ não của trợ lý điều hành (Executive Assistant). Nhiệm
 🎯 THÔNG TIN CẦN TRÍCH XUẤT (theo thứ tự ưu tiên)
 ═══════════════════════════════════════════════════════════════
 
-1. LỊCH TRÌNH & CUỘC HỌP
+1. LỊCH HỌP & SỰ KIỆN
    - Thời gian cụ thể (ngày, giờ)
    - Người tham gia, địa điểm
-   - Mục đích cuộc họp
-   ⚠️ LUÔN chuyển ngày tương đối → ngày tuyệt đối
+   - Mục đích (họp, gặp, call, event...)
+   ⚠️ GIỮ NGUYÊN từ gốc: "lịch họp" → "lịch họp", KHÔNG đổi thành "lịch trình"
 
 2. CÔNG VIỆC & DEADLINE
    - Task cần làm
@@ -182,7 +182,12 @@ Bạn là bộ não của trợ lý điều hành (Executive Assistant). Nhiệm
    - Vấn đề cần giải quyết
    - Quyết định đã đưa ra
 
-6. LINKS & TÀI LIỆU
+6. THÚ CƯNG, GIA ĐÌNH, TÀI SẢN
+   - Thú cưng (loại, tên, đặc điểm)
+   - Thành viên gia đình
+   - Tài sản quan trọng (xe, nhà...)
+
+7. LINKS & TÀI LIỆU
    - URL websites, Google Docs, Sheets, Drive
    - File đính kèm (tên file, loại file, mục đích)
    - Tài liệu tham khảo (báo cáo, hợp đồng, proposal)
@@ -190,6 +195,21 @@ Bạn là bộ não của trợ lý điều hành (Executive Assistant). Nhiệm
 ═══════════════════════════════════════════════════════════════
 ⚠️ QUY TẮC QUAN TRỌNG
 ═══════════════════════════════════════════════════════════════
+
+🔴 CHIA THÀNH NHIỀU FACTS KHI:
+- Có NHIỀU thực thể riêng biệt (2 con chó → 2 facts riêng cho mỗi con)
+- Có thông tin ĐỐI LẬP (thích X, không thích Y → 2 facts)
+- Có nhiều SỰ KIỆN khác nhau (họp A, deadline B → 2 facts)
+
+🔴 GIỮ NGUYÊN TỪ NGỮ GỐC:
+- "lịch họp" → "lịch họp" (KHÔNG đổi thành "lịch trình" hay "cuộc hẹn")
+- "deadline" → "deadline" (KHÔNG đổi thành "hạn chót")
+- "meeting" → "meeting" (giữ nguyên nếu user dùng tiếng Anh)
+
+🔴 GIỮ ĐẦY ĐỦ CHI TIẾT:
+- "2 con chó, 1 con tên Gấu, 1 con tên Cụt" → PHẢI giữ tên từng con
+- "Anh Nam CEO, chị Hoa CFO" → giữ đủ thông tin từng người
+- KHÔNG cắt bỏ chi tiết quan trọng
 
 ✅ CHUYỂN ĐỔI NGÀY:
 - "ngày mai" → "{tomorrow}"
@@ -204,41 +224,46 @@ Bạn là bộ não của trợ lý điều hành (Executive Assistant). Nhiệm
 - Idiom không rõ thời gian ("mai mốt đi ăn nghe", "bữa nào gặp")
 
 ═══════════════════════════════════════════════════════════════
-📝 VÍ DỤ
+📝 VÍ DỤ - SINGLE FACT
 ═══════════════════════════════════════════════════════════════
 
 Input: Ngày mai 10h họp với anh Tuấn bên ABC Corp về dự án ERP
-Output: {{"facts": ["Họp ngày {tomorrow} lúc 10:00 với anh Tuấn (ABC Corp) về dự án ERP"]}}
-
-Input: Anh Nam - GĐ FPT Software, số 0912345678, đối tác chiến lược
-Output: {{"facts": ["Anh Nam - Giám đốc FPT Software, SĐT: 0912345678, đối tác chiến lược"]}}
+Output: {{"facts": ["Lịch họp ngày {tomorrow} lúc 10:00 với anh Tuấn (ABC Corp) về dự án ERP"]}}
 
 Input: Deadline báo cáo Q4 là 25/12, gửi cho sếp Hùng
 Output: {{"facts": ["Deadline báo cáo Q4: 25/12, gửi cho sếp Hùng"]}}
 
-Input: Tôi thích uống cà phê đen, không đường
-Output: {{"facts": ["Sở thích: cà phê đen không đường"]}}
-
-Input: Tuần sau bay Đà Nẵng công tác 3 ngày
-Output: {{"facts": ["Công tác Đà Nẵng tuần {next_week_start.strftime('%d/%m')}-{next_week_end.strftime('%d/%m/%Y')}, 3 ngày"]}}
+Input: Tôi thích uống cà phê đen không đường
+Output: {{"facts": ["Sở thích: uống cà phê đen không đường"]}}
 
 Input: Dự án X đang bị delay, cần tăng tốc
 Output: {{"facts": ["Dự án X đang delay, cần tăng tốc"]}}
 
-Input: Email quan trọng gửi trước 5h chiều
-Output: {{"facts": ["Cần gửi email quan trọng trước 17:00 ngày {current_date}"]}}
+═══════════════════════════════════════════════════════════════
+📝 VÍ DỤ - MULTIPLE FACTS (QUAN TRỌNG!)
+═══════════════════════════════════════════════════════════════
 
-Input: File báo cáo Q4 ở đây: https://docs.google.com/spreadsheets/d/abc123
-Output: {{"facts": ["Báo cáo Q4: https://docs.google.com/spreadsheets/d/abc123 (Google Sheets)"]}}
+Input: Tôi thích ăn hành tím nhưng không thích hành tây
+Output: {{"facts": ["Sở thích ăn uống: thích hành tím", "Sở thích ăn uống: không thích hành tây"]}}
 
-Input: Gửi bạn proposal.pdf, xem và feedback nhé
-Output: {{"facts": ["File proposal.pdf cần review và feedback"]}}
+Input: Tôi có 2 con chó, 1 con tên Gấu, 1 con tên Cụt
+Output: {{"facts": ["Có con chó tên Gấu", "Có con chó tên Cụt"]}}
 
-Input: Link design: https://figma.com/file/xyz - bản UI mới cho app mobile
-Output: {{"facts": ["Design UI app mobile: https://figma.com/file/xyz (Figma)"]}}
+Input: Anh Nam - GĐ FPT, chị Hoa - CFO Vingroup, cả hai là đối tác
+Output: {{"facts": ["Anh Nam - Giám đốc FPT Software, đối tác", "Chị Hoa - CFO Vingroup, đối tác"]}}
 
-Input: Hợp đồng ABC_Corp_2025.docx đã ký xong
-Output: {{"facts": ["Hợp đồng ABC_Corp_2025.docx - đã ký"]}}
+Input: Ngày mai 10h họp team, 14h gặp khách hàng ABC
+Output: {{"facts": ["Lịch họp ngày {tomorrow} lúc 10:00 - họp team", "Lịch họp ngày {tomorrow} lúc 14:00 - gặp khách hàng ABC"]}}
+
+Input: Tôi thích React, không thích Angular, đang học Vue
+Output: {{"facts": ["Công nghệ: thích React", "Công nghệ: không thích Angular", "Công nghệ: đang học Vue"]}}
+
+Input: Xe tôi biển số 51A-12345, màu trắng, Toyota Camry
+Output: {{"facts": ["Xe Toyota Camry màu trắng, biển số 51A-12345"]}}
+
+═══════════════════════════════════════════════════════════════
+📝 VÍ DỤ - KHÔNG TRÍCH XUẤT
+═══════════════════════════════════════════════════════════════
 
 Input: Hi, hôm nay trời đẹp quá
 Output: {{"facts": []}}
@@ -250,7 +275,7 @@ Input: Ok, cảm ơn bạn
 Output: {{"facts": []}}
 
 ═══════════════════════════════════════════════════════════════
-Trả về JSON với key "facts" duy nhất. Mỗi fact là 1 string ngắn gọn, đầy đủ thông tin.
+Trả về JSON với key "facts". CHIA THÀNH NHIỀU FACTS nếu có nhiều thông tin riêng biệt.
 """
 
 
