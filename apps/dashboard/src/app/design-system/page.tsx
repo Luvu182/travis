@@ -471,7 +471,7 @@ export default function DesignSystemPage() {
             <FeatureCard
               icon="lightning"
               title="Phản Hồi Nhanh"
-              description="Thời gian phản hồi dưới 3 giây với công nghệ Gemini Flash."
+              description="Thời gian phản hồi dưới 3 giây với công nghệ AI tốc độ cao."
               badge="Nhanh"
             />
           </div>
@@ -510,11 +510,11 @@ export default function DesignSystemPage() {
         description="Logo nhất quán với thương hiệu cho tất cả nền tảng và công nghệ được hỗ trợ."
       >
         <div className="flex flex-wrap gap-8 items-center">
-          {(['telegram', 'lark', 'slack', 'discord', 'gemini', 'openai', 'postgresql', 'vercel'] as const).map(
+          {(['telegram', 'lark', 'slack', 'discord', 'ai', 'postgresql', 'vercel']).map(
             (type) => (
               <div key={type} className="group text-center">
                 <div className="p-4 rounded-2xl bg-white border border-neutral-200 group-hover:border-primary-300 group-hover:shadow-lg transition-all duration-300">
-                  <IntegrationLogo type={type} size="lg" />
+                  <IntegrationLogo type={type as 'telegram'} size="lg" />
                 </div>
                 <p className="text-xs text-neutral-500 mt-3 capitalize">{type}</p>
               </div>

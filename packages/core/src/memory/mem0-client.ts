@@ -58,9 +58,18 @@ async function memoryRequest<T>(
   return response.json() as Promise<T>;
 }
 
+/** Context message for conversation history */
+export interface ContextMessage {
+  senderName: string;
+  content: string;
+  createdAt?: Date | null;
+}
+
 /**
- * Add memory from conversation message
- * Includes timestamp in metadata so LLM can understand relative dates in context
+ * Add memory from conversation message with context
+ *
+ * When contextMessages is provided, formats them as conversation history
+ * for better extraction (e.g., understanding "file này" refers to previous context)
  *
  * Multi-tenant scoping:
  * - workspaceId: isolates memories between workspaces (primary tenant boundary)
@@ -74,18 +83,31 @@ export async function addMemory(params: {
   message: string;
   senderName?: string;
   groupName?: string;
+  platform?: string;  // telegram, lark, web - for AI context
   sentAt?: Date;
+  contextMessages?: ContextMessage[];  // Recent messages for context
   metadata?: Record<string, unknown>;
 }): Promise<void> {
-  const { userId, groupId, workspaceId, message, senderName, groupName, sentAt } = params;
+  const { userId, groupId, workspaceId, message, senderName, groupName, platform, sentAt, contextMessages } = params;
+
+  // Format context messages as conversation if provided
+  let messageToSend = message;
+  if (contextMessages && contextMessages.length > 0) {
+    // Format: [SenderName]: message content
+    const formattedContext = contextMessages
+      .map(m => `[${m.senderName || 'Unknown'}]: ${m.content}`)
+      .join('\n');
+    messageToSend = formattedContext;
+  }
 
   const response = await memoryRequest<MemoryResponse>('/memories/add', 'POST', {
     user_id: userId,
     group_id: groupId,
     workspace_id: workspaceId,
-    message,
+    message: messageToSend,
     sender_name: senderName,
     group_name: groupName,
+    platform,
     sent_at: sentAt?.toISOString(),
   });
 

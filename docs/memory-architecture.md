@@ -63,10 +63,49 @@ Workspace "Company A" (owned by Admin User)
 
 ## Vietnamese Date Normalization
 
-Memory service tự động normalize relative dates:
-- "ngày mai" → "ngày 18/12/2024"
-- "hôm nay" → "ngày 17/12/2024"
-- "hôm qua" → "ngày 16/12/2024"
+Memory service tự động normalize relative dates khi có **time indicator** (lúc, giờ, sáng, chiều, tối, trưa, Xh):
+
+**Được normalize (có time indicator):**
+- "mai 10h họp" → "ngày 18/12/2025 10h họp"
+- "ngày mai lúc 3 giờ chiều" → "ngày 18/12/2025 lúc 3 giờ chiều"
+- "hôm nay sáng họp" → "ngày 17/12/2025 sáng họp"
+
+**KHÔNG normalize (idiom/không có time indicator):**
+- "mai mốt đi ăn nghe" → giữ nguyên (idiom = "sometime")
+- "hôm nay trời đẹp" → giữ nguyên (không phải lịch)
+
+**Week/Month patterns (luôn normalize):**
+- "tuần sau" → "tuần 22/12-28/12/2025"
+- "tháng sau" → "tháng 1/2026"
+
+## Custom Fact Extraction Prompt
+
+mem0 hỗ trợ `custom_fact_extraction_prompt` để customize logic extraction:
+
+```python
+config = {
+    "llm": {...},
+    "embedder": {...},
+    "vector_store": {...},
+    "custom_fact_extraction_prompt": """
+Extract important facts about the user...
+Current date for reference: {current_date}
+...
+""",
+    "version": "v1.1",
+}
+```
+
+**File cấu hình:** `apps/memory-service/main.py` - function `get_fact_extraction_prompt()`
+
+**Best practices:**
+- Cung cấp few-shot examples với positive và negative cases
+- Specify ngày hiện tại để LLM có thể convert relative dates
+- Trả về JSON format với key "facts"
+
+**Tài liệu tham khảo:**
+- [mem0 Custom Fact Extraction](https://docs.mem0.ai/open-source/features/custom-fact-extraction-prompt)
+- [mem0 Custom Update Memory](https://docs.mem0.ai/open-source/features/custom-update-memory-prompt)
 
 ## Tech Stack
 

@@ -164,7 +164,7 @@ export function Sidebar() {
           {!sidebarCollapsed ? (
             <div className="text-xs text-neutral-500">
               <p className="font-medium text-neutral-700 mb-1">Phiên bản 1.0</p>
-              <p>Powered by Gemini AI</p>
+              <p>Powered by AI</p>
             </div>
           ) : (
             <Icon name="sparkles" size="xs" className="text-neutral-400 mx-auto" />

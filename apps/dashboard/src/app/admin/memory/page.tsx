@@ -169,7 +169,7 @@ export default function AdminMemoryPage() {
             </div>
             <div>
               <p className="text-sm text-neutral-500">Embedding Model</p>
-              <p className="font-semibold text-neutral-900">Gemini embedding-001</p>
+              <p className="font-semibold text-neutral-900">Vector Embedding</p>
             </div>
           </div>
         </Card>
@@ -180,7 +180,7 @@ export default function AdminMemoryPage() {
             </div>
             <div>
               <p className="text-sm text-neutral-500">Memory Framework</p>
-              <p className="font-semibold text-neutral-900">mem0 OSS</p>
+              <p className="font-semibold text-neutral-900">Long-term Memory</p>
             </div>
           </div>
         </Card>

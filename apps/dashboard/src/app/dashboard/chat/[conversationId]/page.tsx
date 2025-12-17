@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, RefreshCw, Bot, Pencil, Trash2, Check, X } from 'lucide-react';
-import { Button, Badge, Icon } from '@/components/ui';
+import { useParams } from 'next/navigation';
+import { Send, RefreshCw, Bot, ArrowLeft, Pencil, Trash2, Check, X } from 'lucide-react';
+import Link from 'next/link';
+import { Button, Icon } from '@/components/ui';
 import { ChatBubble } from '@/components/ui/chat-bubble';
 
 interface Message {
@@ -29,20 +31,52 @@ const DEFAULT_SETTINGS: ChatSettings = {
   useMemory: true,
 };
 
-export default function ChatPage() {
+export default function ConversationPage() {
+  const params = useParams();
+  const conversationId = params.conversationId as string;
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [settings, setSettings] = useState<ChatSettings>(DEFAULT_SETTINGS);
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [isLoadingMemories, setIsLoadingMemories] = useState(false);
   const [showMemories, setShowMemories] = useState(true);
+  const [conversationTitle, setConversationTitle] = useState('');
   const [editingMemoryId, setEditingMemoryId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Fetch conversation history
+  const fetchHistory = useCallback(async () => {
+    if (!conversationId) return;
+
+    setIsLoadingHistory(true);
+    try {
+      const res = await fetch(`/api/chat/${conversationId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.messages) {
+          setMessages(data.messages.map((m: { id: string; role: string; content: string; createdAt: string }) => ({
+            id: m.id,
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+            createdAt: m.createdAt,
+          })));
+        }
+        if (data.conversation?.title) {
+          setConversationTitle(data.conversation.title);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch history:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [conversationId]);
 
   // Fetch memories from dashboard API (which uses session user)
   const fetchMemories = useCallback(async () => {
@@ -112,21 +146,21 @@ export default function ChatPage() {
     setEditingContent('');
   };
 
-  // Load settings from localStorage
+  // Load on mount
   useEffect(() => {
     const saved = localStorage.getItem('chat-settings');
     if (saved) {
       try {
         setSettings(JSON.parse(saved));
       } catch {
-        // Ignore invalid JSON
+        // Ignore
       }
     }
-    // Initial fetch of memories
+    fetchHistory();
     fetchMemories();
-  }, [fetchMemories]);
+  }, [fetchHistory, fetchMemories]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -139,7 +173,6 @@ export default function ChatPage() {
     }
   }, [input]);
 
-
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -150,8 +183,7 @@ export default function ChatPage() {
       createdAt: new Date().toISOString(),
     };
 
-    // Build context BEFORE updating state (includes previous messages)
-    // Then add current user message to context
+    // Build context BEFORE updating state (includes previous messages + current)
     const previousMessages = messages.slice(-settings.contextLength);
     const context = [...previousMessages, userMessage].slice(-settings.contextLength).map(m => ({
       role: m.role,
@@ -162,7 +194,6 @@ export default function ChatPage() {
     setInput('');
     setIsLoading(true);
 
-    // Create placeholder for streaming response
     const assistantMessageId = crypto.randomUUID();
     const assistantMessage: Message = {
       id: assistantMessageId,
@@ -186,17 +217,10 @@ export default function ChatPage() {
         }),
       });
 
-      // Get conversationId from header
-      const newConvId = response.headers.get('X-Conversation-Id');
-      if (newConvId && !conversationId) {
-        setConversationId(newConvId);
-      }
-
       if (!response.ok || !response.body) {
         throw new Error('Stream failed');
       }
 
-      // Read SSE stream
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
@@ -214,7 +238,6 @@ export default function ChatPage() {
               const data = JSON.parse(line.slice(6));
               if (data.content) {
                 fullContent += data.content;
-                // Update message content in real-time
                 setMessages(prev =>
                   prev.map(msg =>
                     msg.id === assistantMessageId
@@ -223,21 +246,15 @@ export default function ChatPage() {
                   )
                 );
               }
-              if (data.done) {
-                // Stream complete
-                break;
-              }
-              if (data.error) {
-                throw new Error(data.error);
-              }
-            } catch (e) {
-              // Ignore parse errors for incomplete chunks
+              if (data.done) break;
+              if (data.error) throw new Error(data.error);
+            } catch {
+              // Ignore parse errors
             }
           }
         }
       }
 
-      // If no content received, show error
       if (!fullContent) {
         setMessages(prev =>
           prev.map(msg =>
@@ -249,7 +266,6 @@ export default function ChatPage() {
       }
 
       // Refresh memories after message (memory extraction takes time)
-      // First refresh after 2s, then again after 5s to catch slow extractions
       setTimeout(() => fetchMemories(), 2000);
       setTimeout(() => fetchMemories(), 5000);
     } catch (error) {
@@ -293,36 +309,46 @@ export default function ChatPage() {
     });
   };
 
+  if (isLoadingHistory) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin text-primary-500 mx-auto mb-4" />
+          <p className="text-neutral-500">Đang tải cuộc hội thoại...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full bg-white">
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <div className="shrink-0 px-4 py-3 border-b border-neutral-200 flex items-center gap-3">
+          <Link
+            href="/dashboard/chat"
+            className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-neutral-600" />
+          </Link>
+          <div>
+            <h1 className="font-semibold text-neutral-900 truncate max-w-md">
+              {conversationTitle || 'Cuộc hội thoại'}
+            </h1>
+            <p className="text-xs text-neutral-500">{messages.length} tin nhắn</p>
+          </div>
+        </div>
+
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto scrollbar-hide">
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-primary-500/25">
-                  <Bot className="w-10 h-10 text-white" />
+              <div className="flex flex-col items-center justify-center min-h-[40vh]">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-4 shadow-xl shadow-primary-500/25">
+                  <Bot className="w-8 h-8 text-white" />
                 </div>
-                <h1 className="text-2xl font-bold text-neutral-900 mb-2">Xin chào! Tôi là Jarvis.</h1>
-                <p className="text-neutral-500 text-center max-w-md">
-                  Tôi là trợ lý AI với khả năng ghi nhớ dài hạn. Hãy hỏi tôi bất cứ điều gì!
-                </p>
-                <div className="flex flex-wrap gap-2 mt-6 justify-center">
-                  <Badge variant="default" size="sm">
-                    <Icon name="brain" size="xs" className="mr-1" />
-                    Long-term Memory
-                  </Badge>
-                  <Badge variant="default" size="sm">
-                    <Icon name="lightning" size="xs" className="mr-1" />
-                    AI Engine
-                  </Badge>
-                  <Badge variant="default" size="sm">
-                    <Icon name="sparkles" size="xs" className="mr-1" />
-                    Vietnamese
-                  </Badge>
-                </div>
+                <p className="text-neutral-500">Chưa có tin nhắn nào</p>
               </div>
             ) : (
               messages.map((message) => (
@@ -363,9 +389,6 @@ export default function ChatPage() {
                 <Send className="w-5 h-5" />
               </Button>
             </div>
-            <p className="text-xs text-neutral-400 mt-2 text-center">
-              Jarvis có thể mắc lỗi. Hãy kiểm tra các thông tin quan trọng.
-            </p>
           </div>
         </div>
       </div>
@@ -373,7 +396,6 @@ export default function ChatPage() {
       {/* Memories Sidebar */}
       {showMemories && (
         <div className="w-72 border-l border-neutral-200 bg-neutral-50 flex flex-col shrink-0">
-          {/* Header */}
           <div className="px-4 py-3 border-b border-neutral-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Icon name="brain" size="sm" className="text-primary-600" />
@@ -388,7 +410,6 @@ export default function ChatPage() {
             </button>
           </div>
 
-          {/* Memories List */}
           <div className="flex-1 overflow-y-auto scrollbar-hide p-3 space-y-3">
             {memories.length === 0 ? (
               <div className="text-center py-8">
@@ -396,9 +417,6 @@ export default function ChatPage() {
                   <Icon name="brain" size="md" className="text-neutral-400" />
                 </div>
                 <p className="text-sm text-neutral-500">Chưa có memories</p>
-                <p className="text-xs text-neutral-400 mt-1">
-                  Chat để tạo memories mới
-                </p>
               </div>
             ) : (
               memories.map((memory) => (
@@ -407,7 +425,6 @@ export default function ChatPage() {
                   className="group p-3 bg-white rounded-xl border border-neutral-200 hover:border-neutral-300 transition-colors"
                 >
                   {editingMemoryId === memory.id ? (
-                    // Edit mode
                     <div className="space-y-2">
                       <textarea
                         value={editingContent}
@@ -432,7 +449,6 @@ export default function ChatPage() {
                       </div>
                     </div>
                   ) : (
-                    // View mode
                     <>
                       <p className="text-sm text-neutral-800 leading-relaxed">
                         {memory.memory}
@@ -465,7 +481,6 @@ export default function ChatPage() {
             )}
           </div>
 
-          {/* Footer */}
           <div className="px-4 py-3 border-t border-neutral-200">
             <p className="text-xs text-neutral-400 text-center">
               {memories.length} memories
@@ -474,7 +489,6 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Toggle Memories Button (when hidden) */}
       {!showMemories && (
         <button
           onClick={() => setShowMemories(true)}

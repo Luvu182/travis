@@ -91,7 +91,7 @@ export default function AdminSettingsPage() {
             <div>
               <label className="font-medium text-neutral-700">Memory Integration</label>
               <p className="text-sm text-neutral-500">
-                Bật/tắt long-term memory (mem0) cho toàn hệ thống
+                Bật/tắt long-term memory cho toàn hệ thống
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">

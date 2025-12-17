@@ -98,7 +98,7 @@ export default function UserMemoriesPage() {
           <div className="flex-1">
             <h3 className="text-base font-semibold text-neutral-900 mb-1">Về Memory System</h3>
             <p className="text-neutral-600 text-sm">
-              J.A.R.V.I.S sử dụng mem0 để lưu trữ thông tin quan trọng từ các cuộc trò chuyện.
+              J.A.R.V.I.S sử dụng AI để lưu trữ thông tin quan trọng từ các cuộc trò chuyện.
               Memories được chia sẻ trong group - thông tin một người nói, cả nhóm có thể access.
               Điều này giúp bot nhớ context và cung cấp câu trả lời chính xác hơn.
             </p>

@@ -159,10 +159,12 @@ async function handleLarkMessage(
   const result = await processMessage({
     userId: user.id,
     groupId: group.id,
+    dbGroupId: group.id,  // For fetching recent messages context
     workspaceId: workspaceId || undefined,
     message: text,
     senderName: user.displayName || undefined,
     groupName: group.name || undefined,
+    platform: 'lark',
   });
 
   // 5. Send response back to Lark

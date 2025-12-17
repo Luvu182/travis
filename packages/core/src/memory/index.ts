@@ -11,6 +11,7 @@ export {
   getMemoryHealth,
   type MemoryItem,
   type MemoryHistoryEntry,
+  type ContextMessage,
 } from './mem0-client.js';
 
 // Retriever helpers (wraps mem0 search + formatting)

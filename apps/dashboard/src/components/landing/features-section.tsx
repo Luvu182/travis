@@ -44,7 +44,7 @@ const features: Array<{
     icon: 'lightning',
     title: 'Phản Hồi Tức Thì',
     description:
-      'Phản hồi dưới 3 giây với Gemini Flash. Đảm bảo 99.9% uptime.',
+      'Phản hồi dưới 3 giây với AI tốc độ cao. Đảm bảo 99.9% uptime.',
   },
   {
     icon: 'shield',

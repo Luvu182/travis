@@ -23,7 +23,7 @@ const faqs = [
   {
     question: 'Độ chính xác trích xuất công việc là bao nhiêu?',
     answer:
-      'J.A.R.V.I.S đạt độ chính xác 85%+ trong trích xuất công việc, sử dụng Gemini Flash làm LLM chính với GPT-4 dự phòng. Được tối ưu cho tiếng Việt và hiểu các format ngày tháng như "ngày mai" hoặc "tuần sau".',
+      'J.A.R.V.I.S đạt độ chính xác 85%+ trong trích xuất công việc, sử dụng AI tiên tiến với hệ thống dự phòng tự động. Được tối ưu cho tiếng Việt và hiểu các format ngày tháng như "ngày mai" hoặc "tuần sau".',
   },
   {
     question: 'Tôi có thể dùng J.A.R.V.I.S miễn phí không?',

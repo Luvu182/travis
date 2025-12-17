@@ -1,5 +1,9 @@
-import { addMemory, generate } from '@jarvis/core';
+import { addMemory, generate, type ContextMessage } from '@jarvis/core';
 import { executeQuery } from './query-handler.js';
+import { getRecentMessages } from '@jarvis/db';
+
+// Number of recent messages to include as context for memory extraction
+const CONTEXT_MESSAGE_COUNT = 10;
 
 // ==================== TYPES ====================
 
@@ -7,9 +11,11 @@ export interface ProcessMessageOptions {
   userId: string;
   groupId: string;
   workspaceId?: string;  // Multi-tenant workspace isolation
+  dbGroupId?: string;    // Database group UUID for fetching recent messages
   message: string;
   senderName?: string;
   groupName?: string;
+  platform?: string;  // telegram, lark, web - for AI context
 }
 
 export interface ProcessMessageResult {
@@ -138,7 +144,24 @@ export async function processMessage(options: ProcessMessageOptions): Promise<Pr
   let totalRetries = 0;
 
   try {
-    // Step 1: Extract and store information via mem0 (automatic extraction)
+    // Step 1: Fetch recent messages for context (if dbGroupId provided)
+    let contextMessages: ContextMessage[] | undefined;
+    if (options.dbGroupId) {
+      try {
+        const recentMsgs = await getRecentMessages(options.dbGroupId, CONTEXT_MESSAGE_COUNT);
+        // Reverse to chronological order (oldest first) and map to ContextMessage
+        contextMessages = recentMsgs.reverse().map(m => ({
+          senderName: m.senderName || 'Unknown',
+          content: m.content,
+          createdAt: m.createdAt,
+        }));
+      } catch (err) {
+        console.warn('[MessageProcessor] Failed to fetch recent messages:', err);
+        // Continue without context - fallback to single message
+      }
+    }
+
+    // Step 2: Extract and store information via mem0 (with conversation context)
     const { retries: extractRetries } = await retryWithBackoff(async () => {
       return await addMemory({
         userId: options.userId,
@@ -147,11 +170,13 @@ export async function processMessage(options: ProcessMessageOptions): Promise<Pr
         message: options.message,
         senderName: options.senderName,
         groupName: options.groupName,
+        platform: options.platform,
+        contextMessages, // Pass recent messages for better extraction
       });
     });
     totalRetries += extractRetries;
 
-    // Step 2: Execute query with advanced ranking and filtering
+    // Step 3: Execute query with advanced ranking and filtering
     const { result: queryResult, retries: searchRetries } = await retryWithBackoff(async () => {
       return await executeQuery({
         userId: options.userId,
