@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Button, Input, Badge, Icon } from '@/components/ui';
+import { useSession } from 'next-auth/react';
+import { Card, Button, Icon } from '@/components/ui';
+import { Avatar } from '@/components/ui/avatar';
 import { signOut } from 'next-auth/react';
 
 interface ChatSettings {
@@ -15,6 +17,7 @@ const DEFAULT_CHAT_SETTINGS: ChatSettings = {
 };
 
 export default function SettingsPage() {
+  const { data: session } = useSession();
   const [chatSettings, setChatSettings] = useState<ChatSettings>(DEFAULT_CHAT_SETTINGS);
   const [saved, setSaved] = useState(false);
 
@@ -43,36 +46,22 @@ export default function SettingsPage() {
       <div>
         <h2 className="text-2xl font-bold text-neutral-900">Cài Đặt</h2>
         <p className="text-sm text-neutral-500 mt-1">
-          Tùy chỉnh các thiết lập cho dashboard và chat
+          Tùy chỉnh trải nghiệm chat của bạn
         </p>
       </div>
 
-      {/* Notifications */}
+      {/* Profile */}
       <Card variant="default">
-        <h3 className="text-base font-semibold text-neutral-900 mb-2">Thông Báo</h3>
-        <p className="text-sm text-neutral-500 mb-4">Cấu hình thông báo</p>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="font-medium text-neutral-700">Cảnh báo lỗi</label>
-              <p className="text-sm text-neutral-500">Nhận thông báo khi error rate vượt ngưỡng</p>
-            </div>
-            <input
-              type="checkbox"
-              defaultChecked
-              className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="font-medium text-neutral-700">Cảnh báo hiệu năng</label>
-              <p className="text-sm text-neutral-500">Thông báo khi response time vượt 1 giây</p>
-            </div>
-            <input
-              type="checkbox"
-              defaultChecked
-              className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-            />
+        <h3 className="text-base font-semibold text-neutral-900 mb-4">Hồ Sơ</h3>
+        <div className="flex items-center gap-4">
+          <Avatar
+            size="xl"
+            src={session?.user?.image || undefined}
+            name={session?.user?.name || 'User'}
+          />
+          <div>
+            <p className="font-semibold text-neutral-900">{session?.user?.name || 'User'}</p>
+            <p className="text-sm text-neutral-500">{session?.user?.email}</p>
           </div>
         </div>
       </Card>
@@ -80,13 +69,13 @@ export default function SettingsPage() {
       {/* Chat Settings */}
       <Card variant="default">
         <h3 className="text-base font-semibold text-neutral-900 mb-2">Cấu Hình Chat</h3>
-        <p className="text-sm text-neutral-500 mb-4">Cấu hình trò chuyện với Jarvis</p>
+        <p className="text-sm text-neutral-500 mb-4">Tùy chỉnh cách trò chuyện với Jarvis</p>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <label className="font-medium text-neutral-700">Context Length</label>
+              <label className="font-medium text-neutral-700">Độ dài ngữ cảnh</label>
               <p className="text-sm text-neutral-500">
-                Số tin nhắn gần nhất được gửi kèm làm context
+                Số tin nhắn gần nhất Jarvis sẽ nhớ trong cuộc trò chuyện
               </p>
             </div>
             <select
@@ -104,9 +93,9 @@ export default function SettingsPage() {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <label className="font-medium text-neutral-700">Memory Integration</label>
+              <label className="font-medium text-neutral-700">Ghi nhớ dài hạn</label>
               <p className="text-sm text-neutral-500">
-                Sử dụng long-term memory (mem0) để nhớ thông tin
+                Cho phép Jarvis ghi nhớ thông tin quan trọng giữa các cuộc trò chuyện
               </p>
             </div>
             <input
@@ -123,37 +112,89 @@ export default function SettingsPage() {
               onClick={saveChatSettings}
               className={saved ? 'bg-emerald-500 hover:bg-emerald-600' : ''}
             >
-              {saved ? 'Đã lưu!' : 'Lưu cài đặt Chat'}
+              <Icon name="check" size="xs" className="mr-1" />
+              {saved ? 'Đã lưu!' : 'Lưu cài đặt'}
             </Button>
           </div>
         </div>
       </Card>
 
-      {/* API Configuration */}
+      {/* Platform Connections */}
       <Card variant="default">
-        <h3 className="text-base font-semibold text-neutral-900 mb-2">Cấu Hình API</h3>
-        <p className="text-sm text-neutral-500 mb-4">Cài đặt kết nối backend API</p>
+        <h3 className="text-base font-semibold text-neutral-900 mb-2">Kết Nối Nền Tảng</h3>
+        <p className="text-sm text-neutral-500 mb-4">Kết nối Jarvis với các nền tảng khác</p>
         <div className="space-y-3">
-          <div>
-            <label className="text-sm font-medium text-neutral-700">API URL</label>
-            <Input
-              type="text"
-              value={process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}
-              disabled
-              className="mt-1"
-              fullWidth
-            />
+          <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Icon name="telegram" size="sm" className="text-blue-500" />
+              </div>
+              <div>
+                <p className="font-medium text-neutral-700">Telegram</p>
+                <p className="text-xs text-neutral-500">Kết nối với group chat Telegram</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" disabled>
+              Sắp ra mắt
+            </Button>
           </div>
-          <p className="text-xs text-neutral-400">
-            Cài đặt qua biến môi trường NEXT_PUBLIC_API_URL
-          </p>
+          <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                <Icon name="lark" size="sm" className="text-indigo-500" />
+              </div>
+              <div>
+                <p className="font-medium text-neutral-700">Lark Suite</p>
+                <p className="text-xs text-neutral-500">Kết nối với workspace Lark</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" disabled>
+              Sắp ra mắt
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Data & Privacy */}
+      <Card variant="default">
+        <h3 className="text-base font-semibold text-neutral-900 mb-2">Dữ Liệu & Quyền Riêng Tư</h3>
+        <p className="text-sm text-neutral-500 mb-4">Quản lý dữ liệu của bạn</p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Icon name="message" size="sm" className="text-blue-600" />
+              </div>
+              <div>
+                <p className="font-medium text-neutral-700">Lịch sử trò chuyện</p>
+                <p className="text-xs text-neutral-500">Xem và quản lý các cuộc hội thoại</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => window.location.href = '/dashboard/history'}>
+              Xem
+            </Button>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                <Icon name="brain" size="sm" className="text-purple-600" />
+              </div>
+              <div>
+                <p className="font-medium text-neutral-700">Memories</p>
+                <p className="text-xs text-neutral-500">Thông tin Jarvis đã ghi nhớ về bạn</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => window.location.href = '/dashboard/memories'}>
+              Xem
+            </Button>
+          </div>
         </div>
       </Card>
 
       {/* Account */}
       <Card variant="default">
         <h3 className="text-base font-semibold text-neutral-900 mb-2">Tài Khoản</h3>
-        <p className="text-sm text-neutral-500 mb-4">Quản lý tài khoản admin</p>
+        <p className="text-sm text-neutral-500 mb-4">Quản lý đăng nhập</p>
         <Button
           variant="outline"
           size="sm"
